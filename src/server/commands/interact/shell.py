@@ -29,12 +29,18 @@ class Shell:
                 if not command:
                     continue
 
-                if command.lower().strip() == 'exit':
+                clean_command = ""
+
+                for c in command:
+                    if c.isprintable():
+                        clean_command += c
+
+                if clean_command.lower() == 'exit':
                     self.__running = False
                     print("[*] Exiting shell")
                     break
 
-                Shell.handle_command(command)
+                Shell.handle_command(clean_command)
 
             except KeyboardInterrupt as e:
                 print(f"[bright_red][!] Shell interrupted {e}\n[*] Exiting shell[/bright_red]")
@@ -42,12 +48,13 @@ class Shell:
 
     @staticmethod
     def handle_command(command):
+
         handler = command.split()
-        command = handler[0]
+        cmd = handler[0]
         args = handler[1:]
 
-        if command not in REGCOMMANDS:
-            print(f"[!] Command '{command}' not found")
+        if cmd not in REGCOMMANDS:
+            print(f"[!] Command '{cmd}' not found")
             return
 
-        REGCOMMANDS[command].execute(*args)
+        REGCOMMANDS[cmd].execute(*args)

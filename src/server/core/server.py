@@ -1,5 +1,4 @@
 # src/server/core/server.py
-import threading
 
 from core import ClientSession
 from core import Manager
@@ -13,52 +12,37 @@ import os
 class Server:
 
     def __init__(self, transport, serializer):
-        self.__session = None
+
         self.__transport = transport
         self.__serializer = serializer
         self.__manager = Manager
         self.__shell = Shell()
-        self.__running = True
+
 
     def start(self):
         print(f"[bright_cyan]{BANNER}[/bright_cyan]")
         time.sleep(0.7)
+        print(f'[bright_cyan][STARTING SERVER] ...[/bright_cyan]')
+        time.sleep(0.7)
         try:
-            self.__transport.start()
+            self.__transport.start(on_client = self.handle_client)
         except Exception as e:
             print(f"[bright_red][!] Something went wrong. Cannot start server\n Error: {e}[/bright_red]")
             return
 
-        shell_thread = threading.Thread(target=self.__shell.run)
-        accept_thread = threading.Thread(target=self.accept_loop, daemon=True)
-
-        shell_thread.start()
-        accept_thread.start()
-
-    def accept_loop(self):
-        while self.__running:
-            try:
-                conn, addr = self.__transport.accept()
-                if conn is not None and addr is not None:
-                    print(f"[bright_green][+] New connection from {addr[0]}[/bright_green]")
-                    client_thread = threading.Thread(target=self.handle_client, args=(conn, addr))
-                    client_thread.start()
-
-            except KeyboardInterrupt as e:
-                print(e)
-                return
+        self.__shell.run()
 
 
     def handle_client(self, client, addr):
-        self.__session = ClientSession(client, self.__transport, self.__serializer)
-        data = self.__session.receive_respone()
+        session = ClientSession(client, self.__transport, self.__serializer)
+        data = session.receive_respone()
         if data is None:
             client.close()
             return
 
         if data['header'] == header.REGISTER:
             Server.handle_register(client, addr, data['data'])
-            self.__session.send_request(header.ACK, 'ACK')
+            session.send_request(header.ACK, 'ACK')
             print(f'[bright_green][+] Successfully registered [bright_cyan]{addr[0]}[bright_cyan][/bright_green]')
         else:
             print(f"[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {data['data']}")
@@ -71,7 +55,6 @@ class Server:
             if confirm.lower() == 'n':
                 return
             elif confirm.lower() == 'y':
-                self.__running = False
                 print("[bright_red][!] Exiting server...[/bright_red]")
                 time.sleep(0.5)
                 try:

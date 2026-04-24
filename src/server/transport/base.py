@@ -9,10 +9,6 @@ class BaseTransport(ABC):
         pass
 
     @abstractmethod
-    def accept(self):
-        pass
-
-    @abstractmethod
     def send(self, conn, data):
         pass
 

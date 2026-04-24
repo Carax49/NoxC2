@@ -1,17 +1,23 @@
 # src/server/transport/tcp_transport.py
 
+import time
 from .base import BaseTransport
 from config import NetworkConfig as netcfg
 from config import ClientConfig as clientcfg
 import socket
+import threading
 from rich import print
 
 
 class TCPTransport(BaseTransport):
+
     def __init__(self):
         self.__server = None
+        self.__on_client = None
+        self.__running = False
 
-    def start(self):
+    def start(self, on_client = None):
+        self.__on_client = on_client
         try:
             self.__server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.__server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -21,36 +27,46 @@ class TCPTransport(BaseTransport):
 
             print(f"[bright_green][bright_magenta][TCP transport][/bright_magenta] "
                   f"listening on {netcfg.HOST}:{netcfg.PORT}[/bright_green]")
+            time.sleep(0.7)
+
+            self.__running = True
+            accept_thread = threading.Thread(target=self.__accept_loop, daemon=True)
+            accept_thread.start()
 
         except socket.error as e:
             print(f"[bright_red][ERROR][/bright_red] [bright_yellow]{e}[/bright_yellow]\n "
                   f"[bright_red]Cannot start server[/bright_red]")
-
             self.__server = None
 
-    def accept(self):
-        if self.__server is None:
-            print("[bright_red][!] Can not connect to the server [/bright_red]")
-            return None, None
 
-        try:
-            conn, addr = self.__server.accept()
-            return conn, addr
+    def __accept_loop(self):
+        while self.__running:
+            try:
+                conn, addr = self.__server.accept()
+                if self.__on_client:
+                    print(f"[bright_green][+] New connection from {addr[0]}[/bright_green]")
+                    client_thread = threading.Thread(
+                        target=self.__on_client,
+                        args=(conn, addr),
+                        daemon=True
+                    )
+                    client_thread.start()
 
-        except socket.timeout as e:
-            # print(f"[bright_red][!] Error: {e} [/bright_red]")
-            return None, None
-        except OSError:
-            return None, None
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+
 
     def stop(self):
+        self.__running = False
         if self.__server:
             self.__server.close()
             self.__server = None
 
     def send(self, conn, data):
         length = len(data).to_bytes(4, byteorder='big')
-        conn.sendall((length + data))
+        conn.sendall(length + data)
 
     def receive(self, conn):
         raw_length = TCPTransport.receive_all_data(conn, 4)
@@ -59,7 +75,7 @@ class TCPTransport(BaseTransport):
         length = int.from_bytes(raw_length, byteorder='big')
         data = TCPTransport.receive_all_data(conn, length)
         if data is None:
-            return data
+            return None
         return data.decode()
 
     @staticmethod
