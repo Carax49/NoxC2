@@ -3,10 +3,11 @@
 from core import ClientSession
 from core import Manager
 from commands import Shell
-from config import BANNER
+from config import start_print
 from config import HeaderType as header
 from rich import print
 import time
+import subprocess
 import os
 
 class Server:
@@ -20,8 +21,11 @@ class Server:
 
 
     def start(self):
-        print(f"[bright_cyan]{BANNER}[/bright_cyan]")
+        subprocess.run(["cls"] if os.name == 'nt' else ["clear"])
+
+        start_print()
         time.sleep(0.7)
+
         print(f'[bright_cyan][STARTING SERVER] ...[/bright_cyan]')
         time.sleep(0.7)
         try:
@@ -50,8 +54,9 @@ class Server:
 
     def stop(self):
         while True:
-            print("[bright_red][*] EXIT SERVER ? (y/n)[/bright_red]: ")
-            confirm = input()
+            print("[bright_red][*] EXIT SERVER ? (y/n)[/bright_red]: ", end="")
+            confirm = input().strip()
+
             if confirm.lower() == 'n':
                 return
             elif confirm.lower() == 'y':

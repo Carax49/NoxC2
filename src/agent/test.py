@@ -1,3 +1,5 @@
+# Basic agent to test with server
+
 import socket
 import json
 

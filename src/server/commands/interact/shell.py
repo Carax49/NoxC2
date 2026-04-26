@@ -1,6 +1,9 @@
 # src/server/commands/interact/shell.py
 
-from commands import REGCOMMANDS
+import os
+from rich import print
+import subprocess
+from commands import GROUPS
 
 class Shell:
     def __init__(self):
@@ -9,10 +12,10 @@ class Shell:
 
 
     def promt(self):
-        promt = '[shell]> '
+        promt = '[NoxC2]> '
 
         if len(self.__current_client) > 0:
-            promt = f'[{len(self.__current_client)} client(s)]>'
+            promt = f'[{len(self.__current_client)} agent(s)]>'
 
         return promt
 
@@ -20,30 +23,62 @@ class Shell:
         self.__current_client.add(cid)
 
     def remove(self, cid):
-        self.__current_client.remove(cid)
+        self.__current_client.discard(cid)
+
+    def remove_all(self):
+        self.__current_client.clear()
+
+    def get_current_client(self):
+        return self.__current_client
 
     def run(self):
-        while self.__running:
-            try:
-                command = input(self.promt()).strip()
-                if not command:
-                    continue
+        try:
+            while self.__running:
+                    print(f"[bright_cyan]{self.promt()}[/bright_cyan]", end='')
 
-                clean_command = ""
+                    command = input().strip()
+                    if not command:
+                        continue
 
-                for c in command:
-                    if c.isprintable():
-                        clean_command += c
+                    # -- sanitize --
+                    clean_command = ""
 
-                if clean_command.lower() == 'exit':
-                    self.__running = False
-                    print("[*] Exiting shell")
-                    break
+                    for c in command:
+                        if c.isprintable():
+                            clean_command += c
 
-                Shell.handle_command(clean_command)
+                    # -- built-in commands --
+                    if clean_command.lower() == 'exit':
+                        check = self.exit()
+                        if check:
+                            self.__running = False
+                            break
+                        continue
 
-            except KeyboardInterrupt as e:
-                print(f"[bright_red][!] Shell interrupted {e}\n[*] Exiting shell[/bright_red]")
+                    if clean_command.lower() == 'clear':
+                        subprocess.run(['cls'] if os.name == 'nt' else ['clear'])
+                        continue
+
+                    # -- handle other commands --
+                    Shell.handle_command(clean_command)
+
+        except KeyboardInterrupt as e:
+            print(f"[bright_red][!] Shell interrupted {e}\n[*] Exiting shell[/bright_red]")
+
+
+    @staticmethod
+    def exit():
+        while True:
+            print("[bright_red][!] Exit ? (y/n): [/bright_red]", end="")
+            confirm = input().strip()
+
+            if confirm.lower() == 'y':
+
+                return 1
+            elif confirm.lower() == 'n':
+                return 0
+            else:
+                continue
 
 
     @staticmethod
@@ -53,8 +88,15 @@ class Shell:
         cmd = handler[0]
         args = handler[1:]
 
-        if cmd not in REGCOMMANDS:
-            print(f"[!] Command '{cmd}' not found")
-            return
+        if cmd in GROUPS['general']:
+            GROUPS['general'][cmd].execute(*args)
 
-        REGCOMMANDS[cmd].execute(*args)
+        elif cmd in GROUPS['host']:
+            GROUPS['host'][cmd].execute(*args)
+
+        elif cmd in GROUPS['agent']:
+            GROUPS['agent'][cmd].execute(*args)
+
+        else:
+            print(f"[!] Command [bright_red]'{cmd}'[/bright_red] not found")
+            return

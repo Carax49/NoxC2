@@ -26,7 +26,7 @@ class TCPTransport(BaseTransport):
             self.__server.settimeout(netcfg.TIMEOUT)
 
             print(f"[bright_green][bright_magenta][TCP transport][/bright_magenta] "
-                  f"listening on {netcfg.HOST}:{netcfg.PORT}[/bright_green]")
+                  f"listening on {netcfg.HOST}:{netcfg.PORT}[/bright_green]\n")
             time.sleep(0.7)
 
             self.__running = True

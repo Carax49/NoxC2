@@ -13,15 +13,16 @@ MAX_TABLE_WIDTH = 300
 class ShowClients(Command):
     name = "client.show"
     description = "Show all / specific clients connected"
+    group = "host"
 
     def execute(self, *args):
         clist = Manager.get_client_list()
 
         if not clist:
-            print("[bright_blue][!] No clients connected[/bright_blue]")
+            print("[blue_violet][!] No clients connected[/blue_violet]\n")
             return
 
-        if len(args) == 0:
+        if len(args) == 0 or len(args) == 1 and args[0] == "all":
             ShowClients.print_list(clist)
             return
         else:
@@ -35,6 +36,7 @@ class ShowClients(Command):
                 print(f"[bright_red][!] Unknown clients: [/bright_red]")
                 for cid in unknown_clients:
                     print(cid)
+                print()
 
 
     @staticmethod
@@ -64,7 +66,7 @@ class ShowClients(Command):
 
         console = Console(width=MAX_TABLE_WIDTH)
         console.print(table)
-        print(f"Total: {len(clist)} client(s)")
+        print(f"[white]Total: {len(clist)} client(s)\n[/white]")
 
     @staticmethod
     def print_details(clist, uuid):
@@ -84,3 +86,20 @@ class ShowClients(Command):
 
         console = Console(width=MAX_TABLE_WIDTH)
         console.print(table)
+        print()
+
+    @staticmethod
+    def get_help():
+        help_detail = f"""
+        Description : Show all / specific clients connected
+        Usage : client.show [arguments]
+        Arguments:
+            {'<empty>/all':<20} : Show information of all clients
+            {'<id>':<20} : Show information of specific client 
+            {'<id1> <id2> ...':<20} : Show information of multiple clients
+
+        Example : client.show all
+                  client.show <id1> <id2> <id2> 
+        """
+
+        return help_detail

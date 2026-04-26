@@ -1,6 +1,8 @@
 # src/server/config/banner.py
 
 import random
+from rich import print
+
 
 # Custom on : https://patorjk.com/software/taag/#p=display&f=Graffiti&t=Type+Something+&x=none&v=4&h=4&w=80&we=false
 
@@ -15,21 +17,18 @@ banners = {
   \:. _    \ \\:\ \ \ \ _\/__\_\_/\\:\ \/_/\ /::_/__   
    \. \`-\  \ \\:\_\ \ \\ \ \ \::\ \\:\_\ \ \\:\____/\ 
     \__\/ \__\/ \_____\/ \_\/  \__\/ \_____\/ \_____\/ 
-                                                       
-                                            
+                                                                                                  
 """,
 
 # Front : Swamp Land
 
 "BANNER_2" : r"""
-
                                              
 @@@  @@@  @@@@@@  @@@  @@@  @@@@@@@  @@@@@@  
 @@!@!@@@ @@!  @@@ @@!  !@@ !@@      @@   @@@ 
 @!@@!!@! @!@  !@!  !@@!@!  !@!        .!!@!  
 !!:  !!! !!:  !!!  !: :!!  :!!       !!:     
-::    :   : :. :  :::  :::  :: :: : :.:: ::: 
-                                                                                                                                                                                                                    
+::    :   : :. :  :::  :::  :: :: : :.:: :::                                                                                                                                                                                                                    
 
 """,
 
@@ -56,7 +55,6 @@ banners = {
  === ==== ===  ===  ======  ===       ===    
  ===  ===  ======  ===  ===  ======= ========
                                              
-
 """
 
 # Font: USA Flag
@@ -65,4 +63,19 @@ banners = {
 #########################################################################
 
 
-BANNER = random.choice(list(banners.values()))
+BANNER = f"{random.choice(list(banners.values()))}"
+
+infomation = """
+──────────────────────────────────────────────────────────────────────
+
+[bold bright_magenta]NoxC2 (v0.1.0)[/bold bright_magenta]
+[white]A tiny framework is developed for educational and research purposes.[/white]
+[bright_cyan]Download : https://github.com/Carax49/NoxC2[/bright_cyan]
+
+──────────────────────────────────────────────────────────────────────
+
+"""
+
+def start_print():
+    print(f"[bright_cyan]{BANNER}[/bright_cyan]")
+    print(infomation)
