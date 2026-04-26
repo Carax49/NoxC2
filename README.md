@@ -1,7 +1,9 @@
 # **NoxC2**
 
 *Một framework Command and Control nhỏ được phát triển cho mục đích học tập.*
-*(Đang trong quá trình phát triển)*
+## Status
+*In development ...*
+
 ## Setup
 
 #### Clone repo
