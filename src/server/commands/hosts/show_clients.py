@@ -22,7 +22,7 @@ class ShowClients(Command):
             print("[blue_violet][!] No clients connected[/blue_violet]\n")
             return
 
-        if len(args) == 0 or len(args) == 1 and args[0] == "all":
+        if len(args) == 0 or len(args) == 1 and args[0].lower() in ('-a', '--all'):
             ShowClients.print_list(clist)
             return
         else:
@@ -94,7 +94,7 @@ class ShowClients(Command):
         Description : Show all / specific clients connected
         Usage : client.show [arguments]
         Arguments:
-            {'<empty>/all':<20} : Show information of all clients
+            {'<empty>/-a/--all':<20} : Show information of all clients
             {'<id>':<20} : Show information of specific client 
             {'<id1> <id2> ...':<20} : Show information of multiple clients
 

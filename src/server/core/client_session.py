@@ -3,11 +3,19 @@
 
 class ClientSession:
 
-    def __init__(self, client, transport, serializer):
-        self.__client = client
-        self.__serializer = serializer
-        self.__transport = transport
+    def __init__(self):
+        self.__client = None
+        self.__serializer = None
+        self.__transport = None
 
+    def set_client(self, client):
+        self.__client = client
+
+    def set_serializer(self, serializer):
+        self.__serializer = serializer
+
+    def set_transport(self, transport):
+        self.__transport = transport
 
     def send_request(self, header, data):
         data = {

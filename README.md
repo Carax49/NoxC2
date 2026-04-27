@@ -1,6 +1,6 @@
 # **NoxC2**
 
-*Một framework Command and Control nhỏ được phát triển cho mục đích học tập.*
+*A tiny Command and Control framework developed for educational purposes.*
 ## Status
 *In development ...*
 
@@ -12,7 +12,7 @@ git clone https://github.com/Carax49/NoxC2.git
 cd NoxC2
 ```
 
-#### Active virtual environment
+#### Activate virtual environment
 ```bash
 python3 -m venv venv
 source venv/bin/activate        # Linux/Mac
@@ -29,3 +29,7 @@ pip install -r requirements.txt
 cd src/server
 python3 main.py
 ```
+
+## Usage
+
+Once the server is running, type 'help' to get started.

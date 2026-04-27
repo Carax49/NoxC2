@@ -2,7 +2,7 @@
 
 from core import ClientSession
 from core import Manager
-from commands import Shell
+from commands import ShellManager
 from config import start_print
 from config import HeaderType as header
 from rich import print
@@ -17,19 +17,23 @@ class Server:
         self.__transport = transport
         self.__serializer = serializer
         self.__manager = Manager
-        self.__shell = Shell()
+        self.__shell = ShellManager
 
 
     def start(self):
-        subprocess.run(["cls"] if os.name == 'nt' else ["clear"])
+        subprocess.run(["cls"] if os.name == 'nt' else ["clear"], shell=True)
 
         start_print()
         time.sleep(0.7)
 
+        self.__transport.set_on_client(self.handle_client)
+        self.__shell.set_exit_handler(self.stop)
+
         print(f'[bright_cyan][STARTING SERVER] ...[/bright_cyan]')
         time.sleep(0.7)
         try:
-            self.__transport.start(on_client = self.handle_client)
+            self.__transport.start()
+            print("[white]Type [blue_violet]'help'[/blue_violet] to get started.[/white]\n")
         except Exception as e:
             print(f"[bright_red][!] Something went wrong. Cannot start server\n Error: {e}[/bright_red]")
             return
@@ -38,7 +42,11 @@ class Server:
 
 
     def handle_client(self, client, addr):
-        session = ClientSession(client, self.__transport, self.__serializer)
+        session = ClientSession()
+        session.set_client(client)
+        session.set_transport(self.__transport)
+        session.set_serializer(self.__serializer)
+
         data = session.receive_respone()
         if data is None:
             client.close()
@@ -54,19 +62,19 @@ class Server:
 
     def stop(self):
         while True:
-            print("[bright_red][*] EXIT SERVER ? (y/n)[/bright_red]: ", end="")
+            print("[bright_red][!] EXIT SERVER ? (y/n)[/bright_red]: ", end="")
             confirm = input().strip()
 
             if confirm.lower() == 'n':
-                return
+                return 0
             elif confirm.lower() == 'y':
-                print("[bright_red][!] Exiting server...[/bright_red]")
+                print("[bright_red][*] Exiting server...[/bright_red]")
                 time.sleep(0.5)
                 try:
                     self.__manager.drop_all_clients()
                     self.__transport.stop()
                     print(f"[bright_green][+] Successfully exit server[/bright_green]")
-                    return
+                    return 1
                 except Exception as e:
                     print(f"[bright_red][!] Something went wrong.\n Error {e}[/bright_red]")
                     os._exit(1)

@@ -1,10 +1,10 @@
 # src/server/transport/tcp_transport.py
 
-import time
-from .base import BaseTransport
 from config import NetworkConfig as netcfg
 from config import ClientConfig as clientcfg
+from .base import BaseTransport
 import socket
+import time
 import threading
 from rich import print
 
@@ -16,8 +16,11 @@ class TCPTransport(BaseTransport):
         self.__on_client = None
         self.__running = False
 
-    def start(self, on_client = None):
+    def set_on_client(self, on_client):
         self.__on_client = on_client
+
+
+    def start(self):
         try:
             self.__server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.__server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
