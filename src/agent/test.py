@@ -21,7 +21,7 @@ if __name__ == '__main__':
         'data': {
             'uuid': '1234',
             'hostname': 'test-host',
-            'username': 'carax',
+            'username': 'ahihi',
             'os': 'Windows',
             'os_version': '11',
             'arch': 'x64'
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         msg = json.loads(payload.decode())
         print("Received:", msg)
 
-        if msg.get('header') == 'command' and msg.get('data') == 'exit':
+        if msg.get('header') == 'command' and msg.get('data') == 'agent.exit':
             print("Exit received")
             break
 

@@ -53,7 +53,7 @@ class Server:
             return
 
         if data['header'] == header.REGISTER:
-            Server.handle_register(client, addr, data['data'])
+            Server.handle_register(client, addr, data['data'], session)
             session.send_request(header.ACK, 'ACK')
             print(f'[bright_green][+] Successfully registered [bright_cyan]{addr[0]}[bright_cyan][/bright_green]')
         else:
@@ -85,7 +85,7 @@ class Server:
 
 
     @staticmethod
-    def handle_register(client, addr, data):
+    def handle_register(client, addr, data, session):
         uuid        = data['uuid']
         hostname    = data['hostname']
         username    = data['username']
@@ -94,4 +94,5 @@ class Server:
         client_os   = f"{data['os']} {data['os_version']}"
         arch        = data['arch']
 
-        Manager.add_client(uuid, hostname, username, address, conn, client_os, arch)
+        session.set_cid(uuid)
+        Manager.add_client(uuid, hostname, username, address, conn, client_os, arch, session)

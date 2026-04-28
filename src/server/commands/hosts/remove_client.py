@@ -2,7 +2,8 @@
 
 from commands.base import Command
 from commands import register
-from commands import Shell
+from commands import ShellManager
+from commands import Exit
 from core import Manager
 from rich import print
 import time
@@ -14,14 +15,21 @@ class RemoveClient(Command):
     description = "Remove specific / all client(s) from the server"
     group = "host"
 
-    handler_shell = Shell()
+    handler_shell = ShellManager
 
     def execute(self, *args):
+        if not args:
+            print(f"[blue_violet][!] No arguments provided. Use 'help {self.name}' for usage[/blue_violet]\n")
+            return
+
         if len(Manager.get_client_list()) == 0:
             print("[blue_violet][!] No clients connected to the server[/blue_violet]\n")
             return
 
-        if len(args) == 1 and args[0].lower() == "all":
+        if len(args) == 1 and args[0].lower() in ('-a', '--all'):
+            for cid in Manager.get_client_list():
+                Exit.execute(cid)
+
             Manager.drop_all_clients()
             self.handler_shell.remove_all()
             time.sleep(0.7)
@@ -35,6 +43,8 @@ class RemoveClient(Command):
                 for cid in args:
                     if Manager.check_valid_cid(cid):
                         valid_clients.append(cid)
+                        Exit.execute(cid)
+
                         Manager.drop_client(cid)
                         self.handler_shell.remove(cid)
                     else:
@@ -57,7 +67,7 @@ class RemoveClient(Command):
         Description : Disconnect specific / all client(s) from the server 
         Usage : client.remove [arguments]
         Arguments:
-            {'all':<20} : Remove all clients
+            {'-a/--all':<20} : Remove all clients
             {'<id>':<20} : Remove a specific client 
             {'<id1> <id2> ...':<20} : Remove multiple clients
 

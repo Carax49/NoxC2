@@ -1,6 +1,7 @@
 # src/server/commands/interact/shell.py
 
 from commands import GROUPS
+from commands import Exit
 from rich import print
 import subprocess
 import os
@@ -59,6 +60,7 @@ class Shell:
                         continue
                     else:
                         self.__running = False
+                        Exit.execute(*self.__current_client)
                         break
 
                 if clean_command.lower() == 'clear':

@@ -82,6 +82,7 @@ class ShowClients(Command):
         table.add_row("PORT", str(info.address[1]))
         table.add_row("OS", str(info.os))
         table.add_row("ARCH", str(info.arch))
+        table.add_row("SESSION", str(info.session))
         table.add_row("LAST BEACON", str(info.last_beacon))
 
         console = Console(width=MAX_TABLE_WIDTH)

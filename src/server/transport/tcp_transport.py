@@ -16,6 +16,9 @@ class TCPTransport(BaseTransport):
         self.__on_client = None
         self.__running = False
 
+    def __str__(self):
+        return f"TCPTransport(host={netcfg.HOST}, port={netcfg.PORT})"
+
     def set_on_client(self, on_client):
         self.__on_client = on_client
 
