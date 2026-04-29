@@ -73,13 +73,13 @@ class Server:
                 try:
                     self.__manager.drop_all_clients()
                     self.__transport.stop()
-                    print(f"[bright_green][+] Successfully exit server[/bright_green]")
+                    print(f"[bright_green][+] Successfully exit server[/bright_green]\n")
                     return 1
                 except Exception as e:
                     print(f"[bright_red][!] Something went wrong.\n Error {e}[/bright_red]")
                     os._exit(1)
             else:
-                print("[bright_red][!] Invalid option. Please try again [/bright_red]")
+                print("[bright_red][!] Invalid option. Please try again [/bright_red]\n")
                 time.sleep(0.5)
                 continue
 
