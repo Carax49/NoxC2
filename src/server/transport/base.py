@@ -9,11 +9,11 @@ class BaseTransport(ABC):
         pass
 
     @abstractmethod
-    def send(self, conn, data):
+    def send(self, *args):
         pass
 
     @abstractmethod
-    def receive(self, conn):
+    def receive(self, *args):
         pass
 
     @abstractmethod

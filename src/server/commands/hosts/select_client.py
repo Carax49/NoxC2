@@ -41,18 +41,20 @@ class SelectClient(Command):
         valid_cid = []
         unknown_cid = []
 
-        if '--add' not in args:
-            self.handler_shell.remove_all()
-
         for cid in args:
             if cid != '--add':
                 if Manager.check_valid_cid(cid):
                     valid_cid.append(cid)
-                    self.handler_shell.add(cid)
                 else:
                     unknown_cid.append(cid)
 
         if valid_cid:
+            if '--add' not in args:
+                self.handler_shell.remove_all()
+
+                for cid in valid_cid:
+                    self.handler_shell.add(cid)
+
             print(f"[blue_violet][+] Successfully selected client(s):[/blue_violet]\n{'\n'.join(valid_cid)}\n")
 
         if unknown_cid:

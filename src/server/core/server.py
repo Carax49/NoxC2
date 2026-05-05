@@ -4,7 +4,7 @@ from core import ClientSession
 from core import Manager
 from commands import ShellManager
 from config import start_print
-from config import HeaderType as header
+from config import MessageType as messtype
 from rich import print
 import time
 import subprocess
@@ -52,9 +52,9 @@ class Server:
             client.close()
             return
 
-        if data['header'] == header.REGISTER:
+        if data['type'] == messtype.REGISTER:
             Server.handle_register(client, addr, data['data'], session)
-            session.send_request(header.ACK, 'ACK')
+            session.send_request(messtype.ACK, 'ACK')
             print(f'[bright_green][+] Successfully registered [bright_cyan]{addr[0]}[bright_cyan][/bright_green]')
         else:
             print(f"[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {data['data']}")

@@ -1,5 +1,6 @@
 # src/server/core/client_session.py
 
+import time
 
 class ClientSession:
 
@@ -8,6 +9,7 @@ class ClientSession:
         self.__client = None
         self.__serializer = None
         self.__transport = None
+        self.__message_id = 0
 
     def __str__(self):
         return (
@@ -28,13 +30,17 @@ class ClientSession:
     def set_transport(self, transport):
         self.__transport = transport
 
-    def send_request(self, header, data):
+    def send_request(self, message_type, data):
         data = {
-            'header': header,
+            'type': message_type,
+            'uuid': self.__cid,
+            'message_id': f'{self.__cid} - {self.__message_id}', # uuid - message id
+            'timestamp' : int(time.time()),
             'data': data
         }
         encode_data = self.__serializer.encode(data)
         self.__transport.send(self.__client, encode_data)
+        self.__message_id += 1
 
     def receive_respone(self):
         respone = self.__transport.receive(self.__client)
