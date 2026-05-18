@@ -1,5 +1,6 @@
 # src/server/transport/http_transport.py
 
+import logging
 import queue
 import threading
 
@@ -91,6 +92,7 @@ class HTTPTransport(BaseTransport):
         self.__on_client = handler
 
     def start(self):
+        logging.getLogger("werkzeug").disabled = True
         self.__server = make_server(self.__host, self.__port, self.__app, threaded=True)
         self.__thread = threading.Thread(target=self.__server.serve_forever, daemon=True)
         self.__thread.start()

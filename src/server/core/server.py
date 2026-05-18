@@ -54,10 +54,10 @@ class Server:
         if data['type'] == messtype.REGISTER:
             Server.handle_register(addr, data['data'], session)
             session.send_request(messtype.ACK, 'ACK')
-            print(f'[bright_green][+] Successfully registered [bright_cyan]{addr[0]}[bright_cyan][/bright_green]')
+            print(f'\n[bright_green][+] Successfully registered [bright_cyan]{addr[0]}[/bright_cyan][/bright_green]')
 
         else:
-            print(f"[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {data['data']}")
+            print(f"\n[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {data['data']}")
 
 
     def stop(self):
@@ -71,6 +71,9 @@ class Server:
                 print("[bright_red][*] Exiting server...[/bright_red]")
                 time.sleep(0.5)
                 try:
+                    from commands.agent.agent_commands import Exit
+
+                    Exit.execute(*self.__shell.get_current_client())
                     self.__manager.drop_all_clients()
                     self.__transport.stop()
                     print(f"[bright_green][+] Successfully exit server[/bright_green]\n")

@@ -11,6 +11,7 @@ from .agent.agent_commands import Exit
 
 from .interact.shell import Shell
 from .interact.shell import ShellManager
+from .agent.remote_shell import RemoteShellCommand
 
 from .hosts.drop_client import DropClient
 from .hosts.remove_client import RemoveClient

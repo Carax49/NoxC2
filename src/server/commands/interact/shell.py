@@ -60,7 +60,6 @@ class Shell:
                         continue
                     else:
                         self.__running = False
-                        Exit.execute(*self.__current_client)
                         break
 
                 if clean_command.lower() == 'clear':

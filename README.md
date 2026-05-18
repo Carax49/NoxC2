@@ -13,7 +13,8 @@ NoxC2/src/server
 │   ├── __init__.py
 │   ├── agent
 │   │   ├── __init__.py
-│   │   └── agent_commands.py
+│   │   ├── agent_commands.py
+│   │   └── remote_shell.py
 │   ├── base.py
 │   ├── help.py
 │   ├── hosts
@@ -51,6 +52,7 @@ NoxC2/src/server
 ## Features
 
 - [x] Shell interaction
+- [x] Agent shell command dispatch
 - [x] Host discovery
 - [x] Multi-client support
 - [x] HTTP Transport
@@ -87,3 +89,13 @@ python3 main.py
 ## Usage
 
 Once the server is running, type 'help' to get started.
+
+Example workflow:
+
+```bash
+client.show -a
+client.select <client-id>
+shell whoami
+shell hostname
+client.drop -a
+```
