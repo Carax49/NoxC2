@@ -1,8 +1,8 @@
 # src/server/core/server.py
 
-from core import ClientSession
-from core import Manager
-from commands import ShellManager
+from .client_manager import Manager
+from .client_session import ClientSession
+from commands.interact.shell import ShellManager
 from config import start_print
 from config import MessageType as messtype
 from rich import print
@@ -41,21 +41,21 @@ class Server:
         self.__shell.run()
 
 
-    def handle_client(self, client, addr):
+    def handle_client(self, uuid, addr):
         session = ClientSession()
-        session.set_client(client)
         session.set_transport(self.__transport)
         session.set_serializer(self.__serializer)
+        session.set_cid(uuid)
 
         data = session.receive_respone()
         if data is None:
-            client.close()
             return
 
         if data['type'] == messtype.REGISTER:
-            Server.handle_register(client, addr, data['data'], session)
+            Server.handle_register(addr, data['data'], session)
             session.send_request(messtype.ACK, 'ACK')
             print(f'[bright_green][+] Successfully registered [bright_cyan]{addr[0]}[bright_cyan][/bright_green]')
+
         else:
             print(f"[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {data['data']}")
 
@@ -85,14 +85,12 @@ class Server:
 
 
     @staticmethod
-    def handle_register(client, addr, data, session):
+    def handle_register(addr, data, session):
         uuid        = data['uuid']
         hostname    = data['hostname']
         username    = data['username']
         address     = addr
-        conn        = client
         client_os   = f"{data['os']} {data['os_version']}"
         arch        = data['arch']
 
-        session.set_cid(uuid)
-        Manager.add_client(uuid, hostname, username, address, conn, client_os, arch, session)
+        Manager.add_client(uuid, hostname, username, address, client_os, arch, session)

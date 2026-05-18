@@ -19,3 +19,7 @@ class BaseTransport(ABC):
     @abstractmethod
     def stop(self):
         pass
+
+    @abstractmethod
+    def set_on_client(self, handler):
+        pass

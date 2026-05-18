@@ -1,8 +1,8 @@
 # src/server/commands/hosts/show_clients.py
 
-from commands import Command
-from commands import register
-from core import Manager
+from ..base import Command
+from ..registry import register
+from core.client_manager import Manager
 from rich import print
 from rich.table import Table
 from rich.console import Console

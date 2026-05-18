@@ -6,7 +6,6 @@ class ClientSession:
 
     def __init__(self):
         self.__cid = None
-        self.__client = None
         self.__serializer = None
         self.__transport = None
         self.__message_id = 0
@@ -21,8 +20,6 @@ class ClientSession:
     def set_cid(self, cid):
         self.__cid = cid
 
-    def set_client(self, client):
-        self.__client = client
 
     def set_serializer(self, serializer):
         self.__serializer = serializer
@@ -39,11 +36,11 @@ class ClientSession:
             'data': data
         }
         encode_data = self.__serializer.encode(data)
-        self.__transport.send(self.__client, encode_data)
+        self.__transport.send(self.__cid, encode_data)
         self.__message_id += 1
 
     def receive_respone(self):
-        respone = self.__transport.receive(self.__client)
+        respone = self.__transport.receive(self.__cid)
         if respone is None:
             return None
 

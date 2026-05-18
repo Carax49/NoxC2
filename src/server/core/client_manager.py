@@ -6,12 +6,11 @@ import threading
 
 class ClientInfo:
 
-    def __init__(self, uuid,  hostname, username, addr, conn, os, arch, session):
+    def __init__(self, uuid,  hostname, username, addr, os, arch, session):
         self.__uuid         = uuid
         self.__hostname     = hostname
         self.__username     = username
         self.__addr         = addr
-        self.__conn         = conn
         self.__os           = os
         self.__arch         = arch
         self.__session      = session
@@ -79,10 +78,10 @@ class ClientManager:
     def get_client_list(self):
         return self.__clients_list
 
-    def add_client(self, uuid, hostname, username, address, conn, os, arch, session):
+    def add_client(self, uuid, hostname, username, address, os, arch, session):
         with self.__lock:
             if uuid not in self.__clients_list:
-                self.__clients_list[uuid] = ClientInfo(uuid, hostname, username, address, conn, os, arch, session)
+                self.__clients_list[uuid] = ClientInfo(uuid, hostname, username, address, os, arch, session)
 
     def drop_client(self, uuid):
         with self.__lock:

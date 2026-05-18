@@ -1,10 +1,10 @@
 # src/server/commands/hosts/remove_client.py
 
-from commands.base import Command
-from commands import register
-from commands import ShellManager
-from commands import Exit
-from core import Manager
+from ..agent.agent_commads import Exit
+from ..base import Command
+from ..interact.shell import ShellManager
+from ..registry import register
+from core.client_manager import Manager
 from rich import print
 import time
 

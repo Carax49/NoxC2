@@ -1,9 +1,9 @@
 # src/server/commands/hosts/drop_client.py
 
-from commands.base import Command
-from commands import register
-from commands import ShellManager
-from core import Manager
+from ..base import Command
+from ..interact.shell import ShellManager
+from ..registry import register
+from core.client_manager import Manager
 from rich import print
 import time
 

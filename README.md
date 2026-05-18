@@ -1,4 +1,4 @@
-# **NoxC2**
+﻿# **NoxC2**
 
 *A tiny Command and Control framework developed for educational purposes.*
 ## Status
@@ -8,12 +8,12 @@
 
 ```bash
 NoxC2/src/server
-│
+│ 
 ├── commands
 │   ├── __init__.py
 │   ├── agent
 │   │   ├── __init__.py
-│   │   └── agent_commands.py
+│   │   └── agent_commads.py
 │   ├── base.py
 │   ├── help.py
 │   ├── hosts
@@ -23,7 +23,7 @@ NoxC2/src/server
 │   │   ├── select_client.py
 │   │   └── show_clients.py
 │   ├── interact
-│   │   ├── __init__.py    
+│   │   ├── __init__.py
 │   │   └── shell.py
 │   └── registry.py
 ├── config
@@ -35,17 +35,15 @@ NoxC2/src/server
 │   ├── client_manager.py
 │   ├── client_session.py
 │   └── server.py
-│
+│ 
 ├── serializer
 │   ├── __init__.py
 │   ├── base.py
 │   └── json.py
 ├── transport
-│   ├── __init__.py
-│   ├── base.py
-│   ├── http_transport.py
-│   └── tcp_transport.py
-│
+│   ├── __init__.py
+│   ├── base.py
+│   └── http_transport.py
 │
 └── main.py
 ```
@@ -55,6 +53,7 @@ NoxC2/src/server
 - [x] Shell interaction
 - [x] Host discovery
 - [x] Multi-client support
+- [x] HTTP Transport
 - [ ] Encryption
 - [ ] Sleep + Jitter
 - [ ] File Transfer

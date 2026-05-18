@@ -1,10 +1,10 @@
 # src/server/commands/help.py
 
-from commands import Command
-from commands import register
-from commands import GENERAL_COMMANDS
-from commands import HOST_COMMANDS
-from commands import AGENT_COMMANDS
+from .base import Command
+from .registry import AGENT_COMMANDS
+from .registry import GENERAL_COMMANDS
+from .registry import HOST_COMMANDS
+from .registry import register
 from rich.markup import escape
 from rich import print
 
