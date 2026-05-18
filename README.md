@@ -53,7 +53,6 @@ NoxC2/src/server
 
 - [x] Shell interaction
 - [x] Agent shell command dispatch
-- [ ] Host discovery
 - [x] Multi-client support
 - [x] HTTP Transport
 - [ ] Encryption
