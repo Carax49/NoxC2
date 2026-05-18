@@ -1,4 +1,4 @@
-# src/server/commands/agent/agent_commads.py
+# src/server/commands/agent/agent_commands.py
 
 from core.client_manager import Manager
 from config import MessageType as messtype

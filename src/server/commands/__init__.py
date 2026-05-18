@@ -7,7 +7,7 @@ from .registry import HOST_COMMANDS
 from .registry import AGENT_COMMANDS
 from .registry import GROUPS
 
-from .agent.agent_commads import Exit
+from .agent.agent_commands import Exit
 
 from .interact.shell import Shell
 from .interact.shell import ShellManager

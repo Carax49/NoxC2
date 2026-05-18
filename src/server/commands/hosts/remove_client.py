@@ -1,6 +1,6 @@
 # src/server/commands/hosts/remove_client.py
 
-from ..agent.agent_commads import Exit
+from ..agent.agent_commands import Exit
 from ..base import Command
 from ..interact.shell import ShellManager
 from ..registry import register

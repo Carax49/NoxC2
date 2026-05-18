@@ -13,7 +13,7 @@ NoxC2/src/server
 │   ├── __init__.py
 │   ├── agent
 │   │   ├── __init__.py
-│   │   └── agent_commads.py
+│   │   └── agent_commands.py
 │   ├── base.py
 │   ├── help.py
 │   ├── hosts

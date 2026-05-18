@@ -1,6 +1,6 @@
 # src/server/commands/interact/shell.py
 
-from ..agent.agent_commads import Exit
+from ..agent.agent_commands import Exit
 from ..registry import GROUPS
 from rich import print
 import subprocess
