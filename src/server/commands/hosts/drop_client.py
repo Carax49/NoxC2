@@ -10,7 +10,7 @@ import time
 @register
 class DropClient(Command):
     name = "client.drop"
-    description = "Drop specific / all client(s) from current session"
+    description = "Drop specific clients or all clients from the current session"
     group = "host"
 
     handler_shell = ShellManager
@@ -55,7 +55,7 @@ class DropClient(Command):
     @staticmethod
     def get_help():
         help_detail = f"""
-        Description : Drop specific / all client(s) from current session
+        Description : Drop specific clients or all clients from the current session
         Usage : client.drop [arguments]
         Arguments:
             {'-a/--all':<20} : Drop all clients

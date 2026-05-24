@@ -8,8 +8,12 @@ from flask import Flask, jsonify, request
 from rich import print
 from werkzeug.serving import make_server
 
-from config import NetworkConfig as netcfg
+import config as netcfg
 from .base import BaseTransport
+
+from typing import Callable, Optional
+
+COMMAND_POLL_TIMEOUT = 50
 
 
 class HTTPTransport(BaseTransport):
@@ -18,7 +22,7 @@ class HTTPTransport(BaseTransport):
         self.__host = host if host is not None else netcfg.HOST
         self.__port = port if port is not None else netcfg.HTTP_PORT
         self.__app = Flask(__name__)
-        self.__on_client = None
+        self.__on_client: Optional[Callable] = None
         self.__server = None
         self.__thread = None
         self.__send_queues = {}  # {uuid: queue} server -> client
@@ -45,7 +49,10 @@ class HTTPTransport(BaseTransport):
             if self.__on_client:
                 self.__on_client(uuid, addr)
 
-            response_data = self.__wait_response(uuid)
+            response_data = self.__wait_response(uuid, timeout=COMMAND_POLL_TIMEOUT)
+            if response_data is None:
+                return b'', 204
+
             return response_data, 200, {'Content-Type': 'application/octet-stream'}
 
         @app.route('/message', methods=['POST'])

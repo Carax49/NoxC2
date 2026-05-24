@@ -1,15 +1,13 @@
 # src/server/config/config.py
 
-class NetworkConfig:
-    HOST = "127.0.0.1"
-    PORT = 4926
-    HTTP_PORT = 8080
-    BUFFER_SIZE = 4926  # byte
-    TIMEOUT = 5 # second
+HOST = "127.0.0.1"
+PORT = 4926
+HTTP_PORT = 8080
+BUFFER_SIZE = 4926  # byte
+TIMEOUT = 5  # second
 
-class ClientConfig:
-    MAX_WAITING_CLIENT = 10
-    MAX_RETRIES = 5
+MAX_WAITING_CLIENT = 10
+MAX_RETRIES = 5
 
 class MessageType:
     # Message Types

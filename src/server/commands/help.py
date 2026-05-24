@@ -80,7 +80,7 @@ class Help(Command):
         Usage : help [arguments]
         Arguments:
             {'<empty>':<20} : Show help menu
-            {'<command>':<20} : Get help for a specific <command>
+            {'<command>':<20} : Get help for a specific command
             {'<cmd_1> <cmd_2> ...':<20} : Get help for multiple commands
             
         Examples : help client.show

@@ -13,13 +13,13 @@ class Shell:
         self.__exit_handler = None
 
 
-    def promt(self):
-        promt = '[NoxC2]> '
+    def prompt(self):
+        prompt = '[NoxC2]> '
 
         if len(self.__current_client) > 0:
-            promt = f'[{len(self.__current_client)} agent(s)]> '
+            prompt = f'[{len(self.__current_client)} agent(s)]> '
 
-        return promt
+        return prompt
 
     def add(self, cid):
         self.__current_client.add(cid)
@@ -39,8 +39,8 @@ class Shell:
     def run(self):
         try:
             while self.__running:
-                current_promt = self.promt()
-                print(f"[bright_cyan]{current_promt}[/bright_cyan]", end='')
+                current_prompt = self.prompt()
+                print(f"[bright_cyan]{current_prompt}[/bright_cyan]", end='')
 
                 command = input().strip()
                 if not command:

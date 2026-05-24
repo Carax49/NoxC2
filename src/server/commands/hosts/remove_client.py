@@ -12,7 +12,7 @@ import time
 @register
 class RemoveClient(Command):
     name = "client.remove"
-    description = "Remove specific / all client(s) from the server"
+    description = "Remove specific clients or all clients from the server"
     group = "host"
 
     handler_shell = ShellManager
@@ -53,7 +53,7 @@ class RemoveClient(Command):
                 if len(valid_clients):
                     time.sleep(0.7)
                     print(f"[blue_violet][+] Successfully removed client(s):[/blue_violet]\n"
-                          f"{'\n'.join(invalid_clients)}")
+                          f"{'\n'.join(valid_clients)}")
 
                 if len(invalid_clients):
                     print(f"[bright_red][!] Unknown client(s):[/bright_red]\n {'\n'.join(invalid_clients)}")
@@ -64,7 +64,7 @@ class RemoveClient(Command):
     @staticmethod
     def get_help():
         help_detail = f"""
-        Description : Disconnect specific / all client(s) from the server 
+        Description : Disconnect specific clients or all clients from the server 
         Usage : client.remove [arguments]
         Arguments:
             {'-a/--all':<20} : Remove all clients

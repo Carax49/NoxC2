@@ -39,10 +39,10 @@ class ClientSession:
         self.__transport.send(self.__cid, encode_data)
         self.__message_id += 1
 
-    def receive_respone(self):
-        respone = self.__transport.receive(self.__cid)
-        if respone is None:
+    def receive_response(self):
+        response = self.__transport.receive(self.__cid)
+        if response is None:
             return None
 
-        decode_respone = self.__serializer.decode(respone)
-        return decode_respone
+        decoded_response = self.__serializer.decode(response)
+        return decoded_response

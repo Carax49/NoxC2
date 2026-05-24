@@ -52,8 +52,8 @@ class SelectClient(Command):
             if '--add' not in args:
                 self.handler_shell.remove_all()
 
-                for cid in valid_cid:
-                    self.handler_shell.add(cid)
+            for cid in valid_cid:
+                self.handler_shell.add(cid)
 
             print(f"[blue_violet][+] Successfully selected client(s):[/blue_violet]\n{'\n'.join(valid_cid)}\n")
 

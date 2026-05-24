@@ -3,6 +3,7 @@
 from .client_manager import Manager
 from .client_session import ClientSession
 from commands.interact.shell import ShellManager
+from commands.agent.agent_commands import Exit
 from config import start_print
 from config import MessageType as messtype
 from rich import print
@@ -47,7 +48,7 @@ class Server:
         session.set_serializer(self.__serializer)
         session.set_cid(uuid)
 
-        data = session.receive_respone()
+        data = session.receive_response()
         if data is None:
             return
 
@@ -71,12 +72,11 @@ class Server:
                 print("[bright_red][*] Exiting server...[/bright_red]")
                 time.sleep(0.5)
                 try:
-                    from commands.agent.agent_commands import Exit
 
                     Exit.execute(*self.__shell.get_current_client())
                     self.__manager.drop_all_clients()
                     self.__transport.stop()
-                    print(f"[bright_green][+] Successfully exit server[/bright_green]\n")
+                    print(f"[bright_green][+] Successfully exited server[/bright_green]\n")
                     return 1
                 except Exception as e:
                     print(f"[bright_red][!] Something went wrong.\n Error {e}[/bright_red]")
