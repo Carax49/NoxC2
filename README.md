@@ -57,7 +57,7 @@ NoxC2/src/server
 - [x] HTTP Transport
 - [ ] Encryption
 - [ ] Sleep + Jitter
-- [ ] File Transfer
+- [x] File Transfer
 
 ## Setup
 
