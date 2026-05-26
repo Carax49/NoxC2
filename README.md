@@ -14,6 +14,7 @@ NoxC2/src/server
 │   ├── agent
 │   │   ├── __init__.py
 │   │   ├── agent_commands.py
+│   │   ├── file_upload.py
 │   │   └── remote_shell.py
 │   ├── base.py
 │   ├── help.py
@@ -36,7 +37,9 @@ NoxC2/src/server
 │   ├── client_manager.py
 │   ├── client_session.py
 │   └── server.py
-│ 
+├── crypto
+│   ├── __init__.py
+│   └── aes_gcm.py
 ├── serializer
 │   ├── __init__.py
 │   ├── base.py
@@ -60,7 +63,8 @@ NoxC2/src/server
 - [x] File Transfer
 
 **--- Agent side ---**
-- [x] Sleep + Jitter (agent side)
+- [x] Sleep + Jitter
+- [x] Command execute
 
 
 ## Setup
