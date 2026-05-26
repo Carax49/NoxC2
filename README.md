@@ -51,13 +51,17 @@ NoxC2/src/server
 
 ## Features
 
+**--- Server side ---**
 - [x] Shell interaction
 - [x] Agent shell command dispatch
 - [x] Multi-client support
 - [x] HTTP Transport
-- [ ] Encryption
-- [ ] Sleep + Jitter
+- [x] Encryption
 - [x] File Transfer
+
+**--- Agent side ---**
+- [x] Sleep + Jitter (agent side)
+
 
 ## Setup
 
@@ -95,6 +99,5 @@ Example workflow:
 client.show -a
 client.select <client-id>
 shell whoami
-shell hostname
 client.drop -a
 ```
