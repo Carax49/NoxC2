@@ -6,26 +6,24 @@ def handle_upload_file(file_path, file_data, file_size):
 
     tmp_path = None
     try:
-        # Normalize data to bytes
+
         if isinstance(file_data, (bytes, bytearray)):
             data = bytes(file_data)
         else:
-            # Assume it's a base64 encoded string
+
             data = base64.b64decode(file_data)
 
-        # Verify size if provided
         if file_size is not None and len(data) != file_size:
             return {
                 "status": "error",
                 "message": f"Size mismatch: expected {file_size}, got {len(data)}"
             }
 
-        # Ensure directory exists
         directory = os.path.dirname(file_path)
         if directory and not os.path.exists(directory):
             os.makedirs(directory, exist_ok=True)
 
-        # Write to a temporary file then atomically replace
+
         tmp_path = file_path + ".tmp"
         with open(tmp_path, 'wb') as f:
             f.write(data)
@@ -35,10 +33,9 @@ def handle_upload_file(file_path, file_data, file_size):
             except Exception:
                 pass
 
-        # Atomic replace
+
         os.replace(tmp_path, file_path)
 
-        # Final verification
         final_size = os.path.getsize(file_path)
         if file_size is not None and final_size != file_size:
             return {

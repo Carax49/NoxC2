@@ -8,4 +8,5 @@ from .config import BUFFER_SIZE
 from .config import TIMEOUT
 from .config import MAX_WAITING_CLIENT
 from .config import MAX_RETRIES
+from .config import SECRET_KEY
 from .config import MessageType

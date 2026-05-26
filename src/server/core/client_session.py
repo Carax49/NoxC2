@@ -1,6 +1,9 @@
 # src/server/core/client_session.py
 
 import time
+from crypto import decrypt_with_config
+from crypto import encrypt_with_config
+
 
 class ClientSession:
 
@@ -35,8 +38,9 @@ class ClientSession:
             'timestamp' : int(time.time()),
             'data': data
         }
-        encode_data = self.__serializer.encode(data)
-        self.__transport.send(self.__cid, encode_data)
+        message_json = self.__serializer.encode(data).decode("utf-8")
+        encrypted_json = encrypt_with_config(message_json, self.__cid)
+        self.__transport.send(self.__cid, encrypted_json.encode("utf-8"))
         self.__message_id += 1
 
     def receive_response(self):
@@ -44,5 +48,7 @@ class ClientSession:
         if response is None:
             return None
 
-        decoded_response = self.__serializer.decode(response)
+        encrypted_json = response.decode("utf-8")
+        message_json = decrypt_with_config(encrypted_json, self.__cid)
+        decoded_response = self.__serializer.decode(message_json)
         return decoded_response

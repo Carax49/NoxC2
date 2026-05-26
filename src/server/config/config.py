@@ -9,6 +9,8 @@ TIMEOUT = 5  # second
 MAX_WAITING_CLIENT = 10
 MAX_RETRIES = 5
 
+SECRET_KEY = "DORAEMONDORAEMONDORAEMONDORAEMON"
+
 class MessageType:
     # Message Types
     # {
@@ -23,3 +25,4 @@ class MessageType:
     ACK = "ack"
     COMMAND = "command"
     RESULT = "result"
+
