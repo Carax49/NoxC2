@@ -62,10 +62,6 @@ NoxC2/src/server
 - [x] Encryption
 - [x] File Transfer
 
-**--- Agent side ---**
-- [x] Sleep + Jitter
-- [x] Command execute
-
 
 ## Setup
 
