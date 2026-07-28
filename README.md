@@ -54,7 +54,6 @@ NoxC2/src/server
 
 ## Features
 
-**--- Server side ---**
 - [x] Shell interaction
 - [x] Agent shell command dispatch
 - [x] Multi-client support
