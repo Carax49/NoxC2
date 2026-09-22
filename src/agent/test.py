@@ -3,21 +3,14 @@ import json
 import os
 import platform
 import socket
-import sys
 import time
 import uuid
-from pathlib import Path
 
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from upload_handler import handle_upload_file
 
 
-SERVER_SRC = Path(__file__).resolve().parents[1] / "server"
-sys.path.insert(0, str(SERVER_SRC))
-
-from crypto import decrypt_with_config
-from crypto import encrypt_with_config
 
 
 SERVER_URL = "http://127.0.0.1:8080"
@@ -29,10 +22,9 @@ AGENT_ID = str(uuid.uuid4())
 
 def send_json(path, data):
     message_json = json.dumps(data)
-    encrypted_json = encrypt_with_config(message_json, AGENT_ID)
     request = Request(
         f"{SERVER_URL}{path}",
-        data=encrypted_json.encode("utf-8"),
+        data=message_json.encode("utf-8"),
         headers={
             "Content-Type": "application/octet-stream",
             "X-UUID": AGENT_ID,
@@ -45,8 +37,7 @@ def send_json(path, data):
         if not body:
             return None
 
-        message_json = decrypt_with_config(body.decode("utf-8"), AGENT_ID)
-        return json.loads(message_json)
+        return json.loads(body.decode("utf-8"))
 
 
 def get_command():
@@ -62,8 +53,7 @@ def get_command():
             if not body:
                 return None
 
-            message_json = decrypt_with_config(body.decode("utf-8"), AGENT_ID)
-            return json.loads(message_json)
+            return json.loads(body.decode("utf-8"))
     except TimeoutError:
         return None
     except socket.timeout:

@@ -1,6 +1,7 @@
-﻿# **NoxC2**
+# **NoxC2**
 
 *A tiny Command and Control framework developed for educational purposes.*
+
 ## Status
 *In development ...*
 
@@ -8,48 +9,44 @@
 
 ```bash
 NoxC2/src/server
-│ 
-├── commands
-│   ├── __init__.py
-│   ├── agent
-│   │   ├── __init__.py
-│   │   ├── agent_commands.py
-│   │   ├── file_upload.py
-│   │   └── remote_shell.py
-│   ├── base.py
-│   ├── help.py
-│   ├── hosts
-│   │   ├── __init__.py
-│   │   ├── drop_client.py
-│   │   ├── remove_client.py
-│   │   ├── select_client.py
-│   │   └── show_clients.py
-│   ├── interact
-│   │   ├── __init__.py
-│   │   └── shell.py
-│   └── registry.py
-├── config
-│   ├── __init__.py
-│   ├── banner.py
-│   └── config.py
-├── core
-│   ├── __init__.py
-│   ├── client_manager.py
-│   ├── client_session.py
-│   └── server.py
-├── crypto
-│   ├── __init__.py
-│   └── aes_gcm.py
-├── serializer
-│   ├── __init__.py
-│   ├── base.py
-│   └── json.py
-├── transport
-│   ├── __init__.py
-│   ├── base.py
-│   └── http_transport.py
-│
-└── main.py
+|
++-- commands
+|   +-- __init__.py
+|   +-- agent
+|   |   +-- __init__.py
+|   |   +-- agent_commands.py
+|   |   +-- file_upload.py
+|   |   +-- remote_shell.py
+|   +-- base.py
+|   +-- help.py
+|   +-- hosts
+|   |   +-- __init__.py
+|   |   +-- drop_client.py
+|   |   +-- remove_client.py
+|   |   +-- select_client.py
+|   |   +-- show_clients.py
+|   +-- interact
+|   |   +-- __init__.py
+|   |   +-- shell.py
+|   +-- registry.py
++-- config
+|   +-- __init__.py
+|   +-- banner.py
+|   +-- config.py
++-- core
+|   +-- __init__.py
+|   +-- client_manager.py
+|   +-- client_session.py
+|   +-- server.py
++-- serializer
+|   +-- __init__.py
+|   +-- base.py
+|   +-- json.py
++-- transport
+|   +-- __init__.py
+|   +-- base.py
+|   +-- http_transport.py
++-- main.py
 ```
 
 ## Features
@@ -58,9 +55,7 @@ NoxC2/src/server
 - [x] Agent shell command dispatch
 - [x] Multi-client support
 - [x] HTTP Transport
-- [x] Encryption
 - [x] File Transfer
-
 
 ## Setup
 

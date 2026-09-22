@@ -83,7 +83,7 @@ infomation = """
 
 [bold bright_magenta]NoxC2 (v0.1.0)[/bold bright_magenta]
 [white]A tiny framework is developed for educational and research purposes.[/white]
-[bright_cyan]Download : https://github.com/Carax49/NoxC2[/bright_cyan]
+[bright_cyan]Author : https://github.com/Carax49[/bright_cyan]
 
 ──────────────────────────────────────────────────────────────────────
 
