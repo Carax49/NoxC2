@@ -56,9 +56,21 @@ class Server:
             Server.handle_register(addr, data['data'], session)
             session.send_request(messtype.ACK, 'ACK')
             print(f'\n[bright_green][+] Successfully registered [bright_cyan]{addr[0]}[/bright_cyan][/bright_green]')
+            try:
+                from transport.api import broadcast_log, broadcast_client_update
+                broadcast_log("success", f"Agent registered: {addr[0]}")
+                broadcast_client_update()
+            except Exception:
+                pass
 
         else:
-            print(f"\n[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {data['data']}")
+            result_data = data['data']
+            print(f"\n[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {result_data}")
+            try:
+                from transport.api import broadcast_log
+                broadcast_log("result", f"[{addr[0]}] {result_data}")
+            except Exception:
+                pass
 
 
     def stop(self):

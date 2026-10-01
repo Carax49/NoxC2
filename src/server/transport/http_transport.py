@@ -29,9 +29,16 @@ class HTTPTransport(BaseTransport):
         self.__recv_queues = {}  # {uuid: queue} client -> server
         self.__lock = threading.Lock()
         self.__register_routes()
+        self.__register_api()
 
     def __str__(self):
         return f"HTTPTransport(host={self.__host}, port={self.__port})"
+
+    def __register_api(self):
+        """Gắn REST API Blueprint (/api/*) và frontend (/) vào Flask app."""
+        from .api import create_api_blueprint
+        blueprint = create_api_blueprint()
+        self.__app.register_blueprint(blueprint)
 
     def __register_routes(self):
         app = self.__app
@@ -67,14 +74,13 @@ class HTTPTransport(BaseTransport):
             addr = (request.remote_addr, request.environ.get('REMOTE_PORT', 0))
             self.__recv_queues[uuid].put(request.get_data())
 
+            # Xử lý kết quả trong thread riêng để không block HTTP response.
+            # Agent chỉ cần biết server đã nhận được — không cần chờ gì thêm.
             if self.__on_client:
-                self.__on_client(uuid, addr)
+                t = threading.Thread(target=self.__on_client, args=(uuid, addr), daemon=True)
+                t.start()
 
-            response_data = self.__wait_response(uuid, timeout=0.1)
-            if response_data is None:
-                return b'', 204
-
-            return response_data, 200, {'Content-Type': 'application/octet-stream'}
+            return b'', 204
 
         @app.route('/command', methods=['GET'])
         def command():
@@ -85,7 +91,11 @@ class HTTPTransport(BaseTransport):
             if uuid not in self.__send_queues:
                 return jsonify({'status': 'error', 'message': 'Unknown client'}), 404
 
-            response_data = self.__wait_response(uuid)
+            # Long-poll: chờ tối đa COMMAND_POLL_TIMEOUT giây cho lệnh mới.
+            # Nếu hết giờ mà không có lệnh → 204, agent sẽ tự poll lại.
+            response_data = self.__wait_response(uuid, timeout=COMMAND_POLL_TIMEOUT)
+            if response_data is None:
+                return b'', 204
             return response_data, 200, {'Content-Type': 'application/octet-stream'}
 
     def __init_queues(self, uuid):
