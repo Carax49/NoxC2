@@ -7,6 +7,7 @@ from commands.agent.agent_commands import Exit
 from config import start_print
 from config import MessageType as messtype
 from rich import print
+from rich.markup import escape
 import time
 import subprocess
 import os
@@ -65,9 +66,12 @@ class Server:
 
         else:
             result_data = data['data']
-            print(f"\n[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {result_data}")
+            # Escape output để tránh rich markup parsing lỗi với HTML/special chars
+            safe_output = escape(str(result_data))
+            print(f"\n[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {safe_output}")
             try:
                 from transport.api import broadcast_log
+                # broadcast_log nhận plain text, không cần escape
                 broadcast_log("result", f"[{addr[0]}] {result_data}")
             except Exception:
                 pass

