@@ -66,16 +66,78 @@ class Server:
 
         else:
             result_data = data['data']
-            # Escape output để tránh rich markup parsing lỗi với HTML/special chars
-            safe_output = escape(str(result_data))
-            print(f"\n[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {safe_output}")
+
+            # Check if this is a file download response (dict with file_data)
+            if isinstance(result_data, dict) and result_data.get('status') == 'success' and 'file_data' in result_data:
+                self.handle_file_download(uuid, addr, result_data)
+            else:
+                # Normal command result
+                # Escape output để tránh rich markup parsing lỗi với HTML/special chars
+                safe_output = escape(str(result_data))
+                print(f"\n[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {safe_output}")
+                try:
+                    from transport.api import broadcast_log
+                    # broadcast_log nhận plain text, không cần escape
+                    broadcast_log("result", f"[{addr[0]}] {result_data}")
+                except Exception:
+                    pass
+
+
+    def handle_file_download(self, uuid, addr, download_data):
+        """
+        Handle saving a downloaded file from agent.
+
+        Args:
+            uuid: Agent UUID
+            addr: Agent address tuple (ip, port)
+            download_data: dict with file_data (base64), file_name, file_size, file_path
+        """
+        import base64
+
+        try:
+            file_name = download_data.get('file_name', 'downloaded_file')
+            file_size = download_data.get('file_size', 0)
+            remote_path = download_data.get('file_path', 'unknown')
+            file_data_b64 = download_data.get('file_data')
+
+            # Decode base64
+            file_bytes = base64.b64decode(file_data_b64)
+
+            # Create downloads directory: downloads/<uuid>/
+            downloads_dir = os.path.join("downloads", uuid)
+            os.makedirs(downloads_dir, exist_ok=True)
+
+            local_save_path = os.path.join(downloads_dir, file_name)
+
+            # Write file
+            with open(local_save_path, 'wb') as f:
+                f.write(file_bytes)
+                f.flush()
+                try:
+                    os.fsync(f.fileno())
+                except Exception:
+                    pass
+
+            actual_size = os.path.getsize(local_save_path)
+
+            print(f"\n[bright_green][+] File downloaded from {addr[0]}:[/bright_green]")
+            print(f"    Remote: [cyan]{remote_path}[/cyan]")
+            print(f"    Saved:  [bright_yellow]{local_save_path}[/bright_yellow] ({actual_size} bytes)")
+
+            # Broadcast to web dashboard
             try:
                 from transport.api import broadcast_log
-                # broadcast_log nhận plain text, không cần escape
-                broadcast_log("result", f"[{addr[0]}] {result_data}")
+                broadcast_log("success", f"Downloaded {file_name} from {addr[0]} → {local_save_path} ({actual_size} bytes)")
             except Exception:
                 pass
 
+        except Exception as e:
+            print(f"\n[bright_red][!] Failed to save downloaded file from {addr[0]}: {e}[/bright_red]")
+            try:
+                from transport.api import broadcast_log
+                broadcast_log("error", f"Failed to save download from {addr[0]}: {e}")
+            except Exception:
+                pass
 
     def stop(self):
         while True:

@@ -262,6 +262,37 @@ def create_api_blueprint() -> Blueprint:
         return jsonify({"ok": True, "sent": sent, "missing": missing,
                         "filename": file_obj.filename, "size": file_size})
 
+    # ── File download ─────────────────────────────────────────────────────────
+
+    @api.route("/api/download", methods=["POST"])
+    def download_file():
+        body = request.get_json(force=True) or {}
+        remote_path = (body.get("remote_path") or "").strip()
+
+        if not remote_path:
+            return jsonify({"ok": False, "error": "Missing remote_path"}), 400
+
+        selected = ShellManager.get_current_client()
+        if not selected:
+            return jsonify({"ok": False, "error": "No agents selected"}), 400
+
+        sent = []
+        missing = []
+
+        for cid in list(selected):
+            client = Manager.get_client(cid)
+            if client is None:
+                missing.append(cid)
+                continue
+            client.session.send_request(messtype.COMMAND, {
+                "command": "agent.download",
+                "remote_path": remote_path,
+            })
+            sent.append(cid)
+
+        broadcast_log("cmd", f"download {remote_path}  →  {len(sent)} agent(s)")
+        return jsonify({"ok": True, "sent": sent, "missing": missing})
+
     # ── SSE log stream ────────────────────────────────────────────────────────
 
     @api.route("/api/events", methods=["GET"])

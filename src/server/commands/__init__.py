@@ -13,6 +13,7 @@ from .interact.shell import Shell
 from .interact.shell import ShellManager
 from .agent.remote_shell import RemoteShellCommand
 from .agent.file_upload import FileUpload
+from .agent.file_download import FileDownload
 
 from .hosts.drop_client import DropClient
 from .hosts.remove_client import RemoveClient

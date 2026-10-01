@@ -11,6 +11,7 @@ import uuid
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from upload_handler import handle_upload_file
+from download_handler import handle_download_file
 
 
 
@@ -86,12 +87,18 @@ def run_command(command_obj):
     if isinstance(command_obj, dict):
         command = command_obj.get('command', '').strip()
 
-        # Handle file upload
+        # Handle file upload (server → agent)
         if command == 'agent.upload':
             return handle_upload_file(
                 command_obj.get('file_path'),
                 command_obj.get('file_data'),
                 command_obj.get('file_size')
+            )
+
+        # Handle file download (agent → server)
+        if command == 'agent.download':
+            return handle_download_file(
+                command_obj.get('remote_path')
             )
 
         # Dict-wrapped shell command
