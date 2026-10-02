@@ -22,6 +22,7 @@ class HTTPTransport(BaseTransport):
         self.__host = host if host is not None else netcfg.HOST
         self.__port = port if port is not None else netcfg.HTTP_PORT
         self.__app = Flask(__name__)
+        self.__app.secret_key = netcfg.SECRET_KEY
         self.__on_client: Optional[Callable] = None
         self.__server = None
         self.__thread = None
@@ -43,8 +44,18 @@ class HTTPTransport(BaseTransport):
     def __register_routes(self):
         app = self.__app
 
+        def _is_authorized():
+            if netcfg.AGENT_KEY:
+                token = request.headers.get('X-Agent-Key') or request.headers.get('Authorization')
+                if token != netcfg.AGENT_KEY:
+                    return False
+            return True
+
         @app.route('/connect', methods=['POST'])
         def connect():
+            if not _is_authorized():
+                return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+
             uuid = request.headers.get('X-UUID')
             if not uuid:
                 return jsonify({'status': 'error', 'message': 'Missing X-UUID header'}), 400
@@ -64,6 +75,9 @@ class HTTPTransport(BaseTransport):
 
         @app.route('/message', methods=['POST'])
         def message():
+            if not _is_authorized():
+                return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+
             uuid = request.headers.get('X-UUID')
             if not uuid:
                 return jsonify({'status': 'error', 'message': 'Missing X-UUID header'}), 400
@@ -84,6 +98,9 @@ class HTTPTransport(BaseTransport):
 
         @app.route('/command', methods=['GET'])
         def command():
+            if not _is_authorized():
+                return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+
             uuid = request.headers.get('X-UUID')
             if not uuid:
                 return jsonify({'status': 'error', 'message': 'Missing X-UUID header'}), 400

