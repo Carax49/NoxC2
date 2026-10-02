@@ -57,9 +57,6 @@ NoxC2/
 │       │   ├── client_session.py    # Client communication session
 │       │   └── server.py            # Main server class
 │       │
-│       ├── crypto/              # Cryptography (placeholder)
-│       │   └── __init__.py
-│       │
 │       ├── downloads/           # Downloaded files from agents
 │       │   └── <agent-uuid>/    # One folder per agent
 │       │
