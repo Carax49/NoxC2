@@ -212,3 +212,9 @@ __marimo__/
 
 .AI/
 .claude/
+
+# SSL / TLS Certificates & Private Keys
+certs/
+*.crt
+*.key
+*.pem

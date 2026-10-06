@@ -2,6 +2,7 @@
 
 import logging
 import queue
+import ssl
 import threading
 
 from flask import Flask, jsonify, request
@@ -18,9 +19,10 @@ COMMAND_POLL_TIMEOUT = 50
 
 class HTTPTransport(BaseTransport):
 
-    def __init__(self, host=None, port=None):
+    def __init__(self, host=None, port=None, use_https=None):
         self.__host = host if host is not None else netcfg.HOST
         self.__port = port if port is not None else netcfg.HTTP_PORT
+        self.__use_https = use_https if use_https is not None else netcfg.USE_HTTPS
         self.__app = Flask(__name__)
         self.__app.secret_key = netcfg.SECRET_KEY
         self.__on_client: Optional[Callable] = None
@@ -33,7 +35,8 @@ class HTTPTransport(BaseTransport):
         self.__register_api()
 
     def __str__(self):
-        return f"HTTPTransport(host={self.__host}, port={self.__port})"
+        scheme = "https" if self.__use_https else "http"
+        return f"HTTPTransport(scheme={scheme}, host={self.__host}, port={self.__port})"
 
     def __register_api(self):
         """Gắn REST API Blueprint (/api/*) và frontend (/) vào Flask app."""
@@ -127,12 +130,34 @@ class HTTPTransport(BaseTransport):
 
     def start(self):
         logging.getLogger("werkzeug").disabled = True
-        self.__server = make_server(self.__host, self.__port, self.__app, threaded=True)
-        self.__thread = threading.Thread(target=self.__server.serve_forever, daemon=True)
-        self.__thread.start()
+        ssl_context = None
 
-        print(f"[bright_green][bright_magenta][HTTP transport][/bright_magenta] "
-              f"listening on {self.__host}:{self.__port}[/bright_green]\n")
+        if self.__use_https:
+            if netcfg.ensure_ssl_certificates():
+                try:
+                    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+                    ssl_context.load_cert_chain(
+                        certfile=str(netcfg.SSL_CERT_PATH),
+                        keyfile=str(netcfg.SSL_KEY_PATH)
+                    )
+                except Exception as e:
+                    print(f"[yellow][!] Failed to load SSL certificates: {e}. Falling back to plain HTTP.[/yellow]")
+                    ssl_context = None
+            else:
+                print("[yellow][!] OpenSSL is not available to generate self-signed certs. Falling back to plain HTTP.[/yellow]")
+
+        if ssl_context:
+            self.__server = make_server(self.__host, self.__port, self.__app, threaded=True, ssl_context=ssl_context)
+            self.__thread = threading.Thread(target=self.__server.serve_forever, daemon=True)
+            self.__thread.start()
+            print(f"[bright_green][bright_magenta][HTTPS/TLS transport][/bright_magenta] "
+                  f"listening on https://{self.__host}:{self.__port}[/bright_green]\n")
+        else:
+            self.__server = make_server(self.__host, self.__port, self.__app, threaded=True)
+            self.__thread = threading.Thread(target=self.__server.serve_forever, daemon=True)
+            self.__thread.start()
+            print(f"[bright_green][bright_magenta][HTTP transport][/bright_magenta] "
+                  f"listening on http://{self.__host}:{self.__port}[/bright_green]\n")
 
     def send(self, uuid, data):
         if uuid not in self.__send_queues:

@@ -3,6 +3,7 @@ import json
 import os
 import platform
 import socket
+import ssl
 import subprocess
 import sys
 import time
@@ -16,11 +17,14 @@ from download_handler import handle_download_file
 
 
 
-SERVER_URL = os.getenv("NOX_SERVER_URL", "http://127.0.0.1:8080")
+SERVER_URL = os.getenv("NOX_SERVER_URL", "https://127.0.0.1:8080")
 RECONNECT_DELAY = int(os.getenv("NOX_RECONNECT_DELAY", "3"))
 AGENT_KEY = os.getenv("NOX_AGENT_KEY", "")  # Pre-shared registration token (if configured)
 
 AGENT_ID = str(uuid.uuid4())
+
+# SSL Context for HTTPS (allows self-signed certificates in lab/research mode without external dependencies)
+_SSL_CONTEXT = ssl._create_unverified_context() if SERVER_URL.lower().startswith("https://") else None
 
 
 def _build_headers(extra_headers=None):
@@ -44,7 +48,7 @@ def send_json(path, data):
         method="POST",
     )
 
-    with urlopen(request, timeout=30) as response:
+    with urlopen(request, timeout=30, context=_SSL_CONTEXT) as response:
         body = response.read()
         if not body:
             return None
@@ -61,7 +65,7 @@ def get_command():
     )
 
     try:
-        with urlopen(request, timeout=60) as response:
+        with urlopen(request, timeout=60, context=_SSL_CONTEXT) as response:
             body = response.read()
             if not body:
                 return None

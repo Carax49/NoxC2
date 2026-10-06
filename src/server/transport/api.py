@@ -324,4 +324,10 @@ def create_api_blueprint() -> Blueprint:
             },
         )
 
+    # ── Serve static frontend assets (CSS, JS) ────────────────────────────────
+
+    @api.route("/<path:filename>")
+    def static_files(filename):
+        return send_from_directory(_FRONTEND_DIR, filename)
+
     return api

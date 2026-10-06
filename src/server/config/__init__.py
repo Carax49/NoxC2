@@ -11,7 +11,9 @@ from .config import (
     MAX_RETRIES,
     SECRET_KEY,
     AGENT_KEY,
+    USE_HTTPS,
     SSL_CERT_PATH,
     SSL_KEY_PATH,
+    ensure_ssl_certificates,
     MessageType,
 )

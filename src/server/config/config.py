@@ -2,6 +2,8 @@
 
 import os
 import secrets
+import shutil
+import subprocess
 from pathlib import Path
 
 
@@ -35,6 +37,9 @@ def _load_env():
 # Nạp biến môi trường từ .env
 _load_env()
 
+# Project root path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+
 # Server Network Configuration
 HOST = os.getenv("NOX_HOST", "127.0.0.1")
 PORT = int(os.getenv("NOX_PORT", "4926"))
@@ -52,9 +57,57 @@ SECRET_KEY = os.getenv("NOX_SECRET_KEY") or secrets.token_hex(32)
 # AGENT_KEY: Pre-Shared Key (Token xác thực Agent lúc kết nối, rỗng = không yêu cầu)
 AGENT_KEY = os.getenv("NOX_AGENT_KEY", "")
 
-# SSL / TLS Settings (Dùng cho HTTPS Roadmap)
-SSL_CERT_PATH = os.getenv("NOX_SSL_CERT", "")
-SSL_KEY_PATH = os.getenv("NOX_SSL_KEY", "")
+# HTTPS / TLS Transport Configuration
+USE_HTTPS = os.getenv("NOX_USE_HTTPS", "true").lower() in ("true", "1", "yes")
+
+_DEFAULT_CERT_DIR = PROJECT_ROOT / "certs"
+SSL_CERT_PATH = os.getenv("NOX_SSL_CERT") or str(_DEFAULT_CERT_DIR / "server.crt")
+SSL_KEY_PATH = os.getenv("NOX_SSL_KEY") or str(_DEFAULT_CERT_DIR / "server.key")
+
+
+def ensure_ssl_certificates() -> bool:
+    """
+    Đảm bảo chứng chỉ SSL và private key đã tồn tại.
+    Nếu chưa có, tự động tạo self-signed certificate thông qua openssl.
+    Trả về True nếu thành công, False nếu thất bại.
+    """
+    cert_path = Path(SSL_CERT_PATH)
+    key_path = Path(SSL_KEY_PATH)
+
+    if cert_path.is_file() and key_path.is_file():
+        return True
+
+    # Tạo thư mục chứa nếu chưa tồn tại
+    cert_path.parent.mkdir(parents=True, exist_ok=True)
+    key_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Kiểm tra xem openssl có sẵn trong hệ thống không
+    openssl_bin = shutil.which("openssl")
+    if not openssl_bin:
+        return False
+
+    try:
+        cmd = [
+            openssl_bin,
+            "req",
+            "-x509",
+            "-newkey",
+            "rsa:2048",
+            "-keyout",
+            str(key_path),
+            "-out",
+            str(cert_path),
+            "-days",
+            "365",
+            "-nodes",
+            "-subj",
+            "/CN=127.0.0.1",
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        return res.returncode == 0 and cert_path.is_file() and key_path.is_file()
+    except Exception:
+        return False
+
 
 
 class MessageType:
