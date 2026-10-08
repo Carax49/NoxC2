@@ -1,0 +1,16 @@
+ Nhược điểm & Thách thức thực tế (Cons / Pitfalls)
+
+Vấn đề: 1. Agent Dependency (cryptography)
+Chi tiết thách thức: shared/crypto/aes_gcm.py sử dụng thư viện C-binding cryptography. Nếu Agent dùng file này, máy nạn nhân
+(victim) bắt buộc phải có pip install cryptography -> Mất tính chất "Pure Python stdlib" của Agent.
+Giải pháp khắc phục: Option A: Với demo/nghiên cứu: chấp nhận agent cần cài thư viện.<br>Option B: Dùng pure Python AES/XOR/RC4
+hoặc đóng gói agent bằng PyInstaller/Nuitka thành file thực thi độc lập (.exe / ELF binary).
+────────────────────────────────────────
+Vấn đề: 2. Độc lập khi phân phối Agent (Implant Delivery)
+Chi tiết thách thức: Khi triển khai thực tế trên máy target, ta không thể copy cả folder src/shared/ theo cùng test.py.
+Giải pháp khắc phục: Viết thêm script Agent Builder/Generator để bundle nội dung file shared/crypto/aes_gcm.py trực tiếp vào mã
+nguồn của agent trước khi xuất ra payload.
+────────────────────────────────────────
+Vấn đề: 3. Khởi động môi trường dev
+Chi tiết thách thức: Import chéo from shared... đòi hỏi cấu hình PYTHONPATH hoặc chạy dạng package python -m ....
+Giải pháp khắc phục: Thêm file __init__.py ở các cấp và document rõ lệnh chạy trong README / agent.md.
