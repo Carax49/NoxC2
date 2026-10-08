@@ -2,7 +2,7 @@
 
 HOST = "127.0.0.1"
 PORT = 4926
-HTTP_PORT = 8080
+HTTP_PORT = 4926
 BUFFER_SIZE = 4926  # byte
 TIMEOUT = 5  # second
 
