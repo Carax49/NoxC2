@@ -2,6 +2,7 @@
 
 from .banner import start_print
 from .config import (
+    DB_PATH,
     HOST,
     PORT,
     HTTP_PORT,

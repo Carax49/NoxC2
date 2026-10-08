@@ -215,6 +215,7 @@ def handle_task(task):
 
 
 def run_agent():
+    global SERVER_URL, _SSL_CONTEXT
     while True:
         try:
             task = register()
@@ -226,6 +227,11 @@ def run_agent():
                     return
 
         except (HTTPError, URLError, TimeoutError, ConnectionError) as e:
+            err_str = str(e)
+            if "WRONG_VERSION_NUMBER" in err_str and SERVER_URL.startswith("https://"):
+                SERVER_URL = "http://" + SERVER_URL[8:]
+                _SSL_CONTEXT = None
+                print(f"[!] Server is running plain HTTP. Auto-switched to {SERVER_URL}")
             print(f"[!] Connection error: {e}")
         except KeyboardInterrupt:
             print("[*] Agent interrupted")

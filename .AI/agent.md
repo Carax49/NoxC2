@@ -69,8 +69,12 @@ NoxC2/
 │       ├── main.py           ← Entry point server
 │       ├── config/
 │       │   ├── __init__.py   ← Re-export tất cả config
-│       │   ├── config.py     ← Hằng số cấu hình (HOST, PORT, HTTP_PORT, BUFFER_SIZE, TIMEOUT, MessageType)
+│       │   ├── config.py     ← Hằng số cấu hình (HOST, PORT, HTTP_PORT, BUFFER_SIZE, TIMEOUT, DB_PATH, MessageType)
 │       │   └── banner.py     ← ASCII art banner + thông tin khởi động
+│       ├── db/
+│       │   ├── __init__.py   ← Database Singleton & WAL Connection Context Manager
+│       │   ├── schema.py     ← DDL scripts & init_db() tạo bảng / indexes
+│       │   └── repository.py ← Repositories: AgentRepo, TaskRepo, TransferRepo, LogRepo
 │       ├── core/
 │       │   ├── server.py     ← Class Server — orchestrator chính, xử lý kết quả & file download
 │       │   ├── client_manager.py ← ClientInfo + ClientManager (singleton Manager)
@@ -130,7 +134,13 @@ NoxC2/
 │          │     Routes: /connect  POST       │
 │          │             /message  POST       │
 │          │             /command  GET        │
+│          │             /api/*    REST API   │
 │          │     SSLContext: certs/server.crt │
+│          │                                  │
+│          ├── Database (SQLite WAL Mode)     │
+│          │     noxc2.db (agents, tasks,     │
+│          │     task_results, transfers,     │
+│          │     audit_logs)                  │
 │          │                                  │
 │          ├── ClientManager (singleton)      │
 │          │     {uuid → ClientInfo}          │
@@ -485,6 +495,9 @@ MAX_RETRIES      = 5
 SECRET_KEY       = os.getenv("NOX_SECRET_KEY") or secrets.token_hex(32)
 AGENT_KEY        = os.getenv("NOX_AGENT_KEY", "")
 
+# Database Configuration (SQLite)
+DB_PATH          = os.getenv("NOX_DB_PATH") or "noxc2.db"
+
 # HTTPS / TLS Transport
 USE_HTTPS        = os.getenv("NOX_USE_HTTPS", "true").lower() in ("true", "1", "yes")
 SSL_CERT_PATH    = os.getenv("NOX_SSL_CERT") or "certs/server.crt"
@@ -505,6 +518,7 @@ RESULT   = "result"
 ## 15. Tính Năng Đã Hoàn Thành vs. Cần Phát Triển
 
 ### ✅ Đã xong
+- Persistence & SQLite Database (Lưu trữ bền vững agents, tasks, kết quả lệnh, lịch sử file transfer, audit logs với SQLite WAL mode)
 - HTTPS / TLS Transport Security (Mã hoá toàn bộ traffic sử dụng stdlib `ssl` + auto self-signed cert generation)
 - Pre-Shared Key Agent Authentication (`X-Agent-Key`)
 - HTTP / HTTPS Transport (Flask + Werkzeug threaded WSGI)
@@ -529,7 +543,6 @@ RESULT   = "result"
 - **System inspection** (Mạng, routing, arp qua lệnh native)
 - **Chunked file streaming** (Truyền file dung lượng lớn chia nhỏ chunks)
 - **Agent Jitter & Sleep configuration** (Tăng tính ẩn mình trước IDS/IPS)
-- **Persistence & SQLite Database** (Lưu trữ lịch sử lệnh, session, credentials)
 
 ---
 
@@ -664,6 +677,22 @@ POST /api/upload              → upload file tới all selected agents (multipa
      Response: { ok, sent, missing, filename, size }
      Lỗi 400: thiếu file hoặc remote_path
      Lỗi 400: chưa select agent nào
+```
+
+#### Database & History Endpoints
+
+```
+GET  /api/history             → lấy lịch sử lệnh & kết quả (query: ?uuid=<id>&limit=50)
+     Response: { ok: true, history: [{id, agent_uuid, command_type, command_payload, created_at, status, output, return_code, received_at}, ...], total }
+
+GET  /api/transfers           → danh sách truyền file upload / download (query: ?uuid=<id>&limit=100)
+     Response: { ok: true, transfers: [{id, agent_uuid, direction, remote_path, local_path, file_size, md5_hash, completed_at}, ...], total }
+
+GET  /api/downloads/<uuid>/<file> → tải file nhị phân đã download từ server về trình duyệt
+     Response: Binary file stream (attachment)
+
+GET  /api/logs                → lấy lịch sử audit logs hệ thống từ CSDL (query: ?limit=100)
+     Response: { ok: true, logs: [{id, level, message, created_at}, ...], total }
 ```
 
 #### SSE Event Stream
@@ -1491,5 +1520,45 @@ def static_files(filename):
 
 ---
 
-*Được tạo: 2026-10-01 | Cập nhật gần nhất: 2026-10-06*
+## 23. SQLite Database Architecture & Data Persistence (thêm 2026-10-08)
+
+### 23.1. Tổng Quan & Công Nghệ
+- **CSDL:** SQLite 3 (`noxc2.db`), 100% Zero-Dependency sử dụng Python stdlib `sqlite3`.
+- **Concurrency & WAL Mode:** Để đảm bảo tính toàn vẹn khi Flask chạy đa luồng (`threaded=True`), SQLite kết nối qua Context Manager với các PRAGMA:
+  - `PRAGMA journal_mode = WAL;` (Write-Ahead Logging cho phép nhiều luồng đọc đồng thời khi ghi).
+  - `PRAGMA synchronous = NORMAL;` (Tối ưu I/O ghi đĩa).
+  - `PRAGMA foreign_keys = ON;` (Kích hoạt khóa ngoại & Cascade Delete).
+  - `PRAGMA busy_timeout = 15000;` (Chờ 15s nếu có lock thay vì báo lỗi).
+- **Mô hình truy xuất:** Repository Pattern kết hợp Thread-safe Connection Context Manager tại `src/server/db/`.
+
+### 23.2. Schema Database (5 Bảng)
+1. **`agents`**: Lưu trữ các agents đã từng kết nối (`uuid`, `hostname`, `username`, `ip_address`, `port`, `os_type`, `arch`, `first_seen`, `last_beacon`, `status`).
+2. **`tasks`**: Lưu danh sách lệnh phát từ Operator / Web API (`id`, `agent_uuid`, `command_type`, `command_payload`, `created_at`, `status`).
+3. **`task_results`**: Lưu kết quả thực thi lệnh (`task_id`, `agent_uuid`, `output`, `return_code`, `received_at`).
+4. **`file_transfers`**: Lịch sử truyền file 2 chiều (`id`, `agent_uuid`, `direction`, `remote_path`, `local_path`, `file_size`, `md5_hash`, `completed_at`).
+5. **`audit_logs`**: Nhật ký hoạt động hệ thống (`id`, `level`, `message`, `created_at`).
+
+### 23.3. Cấu Trúc Module Database
+```
+src/server/db/
+├── __init__.py          ← Database class singleton, get_connection() context manager & re-exports
+├── schema.py            ← DDL script và hàm init_db()
+└── repository.py        ← AgentRepository, TaskRepository, FileTransferRepository, LogRepository
+```
+
+### 23.4. Các Điểm Tích Hợp Tự Động
+- **Đăng ký Agent:** `Server.handle_register()` tự động gọi `AgentRepository.upsert_agent(...)`.
+- **Gửi lệnh:** `ClientSession.send_request()` tự động tạo task trong `TaskRepository.create_task(...)`.
+- **Nhận kết quả:** `Server.handle_client()` tự động cập nhật kết quả qua `TaskRepository.save_latest_result(...)`.
+- **Upload / Download file:** Tự động lưu thông tin truyền file (remote_path, local_path, file_size, md5_hash) vào `FileTransferRepository`.
+- **Thời gian thực beacon:** Cập nhật `AgentRepository.update_beacon(uuid)` và `ClientInfo.last_beacon_update()` khi agent poll lệnh hoặc gửi response.
+- **Audit Logging:** Mọi lời gọi `broadcast_log()` tự động đồng bộ vào bảng `audit_logs`.
+
+---
+
+*Section 23 added: 2026-10-08 | By: AI assistant*
+
+---
+
+*Được tạo: 2026-10-01 | Cập nhật gần nhất: 2026-10-08*
 

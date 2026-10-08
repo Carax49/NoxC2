@@ -213,6 +213,16 @@ __marimo__/
 .AI/
 .claude/
 
+# SQLite Database & WAL logs
+noxc2.db
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
 # SSL / TLS Certificates & Private Keys
 certs/
 *.crt

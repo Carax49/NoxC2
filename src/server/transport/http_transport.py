@@ -88,6 +88,17 @@ class HTTPTransport(BaseTransport):
             if uuid not in self.__recv_queues:
                 return jsonify({'status': 'error', 'message': 'Unknown client'}), 404
 
+            # Cập nhật beacon thời gian thực
+            try:
+                from core.client_manager import Manager
+                from db import AgentRepository
+                AgentRepository.update_beacon(uuid)
+                client = Manager.get_client(uuid)
+                if client:
+                    client.last_beacon_update()
+            except Exception:
+                pass
+
             addr = (request.remote_addr, request.environ.get('REMOTE_PORT', 0))
             self.__recv_queues[uuid].put(request.get_data())
 
@@ -110,6 +121,17 @@ class HTTPTransport(BaseTransport):
 
             if uuid not in self.__send_queues:
                 return jsonify({'status': 'error', 'message': 'Unknown client'}), 404
+
+            # Cập nhật beacon thời gian thực khi agent poll lệnh
+            try:
+                from core.client_manager import Manager
+                from db import AgentRepository
+                AgentRepository.update_beacon(uuid)
+                client = Manager.get_client(uuid)
+                if client:
+                    client.last_beacon_update()
+            except Exception:
+                pass
 
             # Long-poll: chờ tối đa COMMAND_POLL_TIMEOUT giây cho lệnh mới.
             # Nếu hết giờ mà không có lệnh → 204, agent sẽ tự poll lại.

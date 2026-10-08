@@ -47,7 +47,13 @@ def _broadcast(event_type: str, data: dict):
 
 
 def broadcast_log(level: str, message: str):
-    """Shortcut để gửi log event ra frontend."""
+    """Shortcut để gửi log event ra frontend và lưu vào CSDL."""
+    try:
+        from db import LogRepository
+        LogRepository.add_log(level, message)
+    except Exception:
+        pass
+
     _broadcast("log", {
         "level": level,
         "message": message,
@@ -188,6 +194,11 @@ def create_api_blueprint() -> Blueprint:
                 Manager.drop_client(cid)
                 ShellManager.remove(cid)
                 removed.append(cid)
+                try:
+                    from db import AgentRepository
+                    AgentRepository.set_status(cid, 'dead')
+                except Exception:
+                    pass
             else:
                 unknown.append(cid)
 
@@ -292,6 +303,73 @@ def create_api_blueprint() -> Blueprint:
 
         broadcast_log("cmd", f"download {remote_path}  →  {len(sent)} agent(s)")
         return jsonify({"ok": True, "sent": sent, "missing": missing})
+
+    # ── Database Query Endpoints ──────────────────────────────────────────────
+
+    @api.route("/api/history", methods=["GET"])
+    def get_history():
+        uuid = request.args.get("uuid")
+        try:
+            limit = int(request.args.get("limit", 50))
+        except ValueError:
+            limit = 50
+
+        try:
+            from db import TaskRepository
+            history = TaskRepository.get_history(agent_uuid=uuid, limit=limit)
+            return jsonify({"ok": True, "history": history, "total": len(history)})
+        except Exception as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+
+    @api.route("/api/transfers", methods=["GET"])
+    @api.route("/api/downloads", methods=["GET"])
+    def get_transfers():
+        uuid = request.args.get("uuid")
+        try:
+            limit = int(request.args.get("limit", 100))
+        except ValueError:
+            limit = 100
+
+        try:
+            from db import FileTransferRepository
+            if uuid:
+                transfers = FileTransferRepository.get_by_agent(agent_uuid=uuid, limit=limit)
+            else:
+                transfers = FileTransferRepository.get_all(limit=limit)
+            return jsonify({"ok": True, "transfers": transfers, "total": len(transfers)})
+        except Exception as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
+
+    @api.route("/api/downloads/<uuid>/<path:filename>", methods=["GET"])
+    def download_stored_file(uuid, filename):
+        candidates = [
+            Path("downloads") / uuid,
+            Path(__file__).resolve().parent.parent.parent.parent / "downloads" / uuid,
+        ]
+        target_dir = None
+        for cand in candidates:
+            if cand.is_dir() and (cand / filename).is_file():
+                target_dir = cand
+                break
+
+        if not target_dir:
+            return jsonify({"ok": False, "error": "File not found"}), 404
+
+        return send_from_directory(str(target_dir), filename, as_attachment=True)
+
+    @api.route("/api/logs", methods=["GET"])
+    def get_logs():
+        try:
+            limit = int(request.args.get("limit", 100))
+        except ValueError:
+            limit = 100
+
+        try:
+            from db import LogRepository
+            logs = LogRepository.get_recent(limit=limit)
+            return jsonify({"ok": True, "logs": logs, "total": len(logs)})
+        except Exception as e:
+            return jsonify({"ok": False, "error": str(e)}), 500
 
     # ── SSE log stream ────────────────────────────────────────────────────────
 

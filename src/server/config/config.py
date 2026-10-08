@@ -40,6 +40,9 @@ _load_env()
 # Project root path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
+# Database Configuration (SQLite)
+DB_PATH = os.getenv("NOX_DB_PATH") or str(PROJECT_ROOT / "noxc2.db")
+
 # Server Network Configuration
 HOST = os.getenv("NOX_HOST", "127.0.0.1")
 PORT = int(os.getenv("NOX_PORT", "4926"))
@@ -81,8 +84,23 @@ def ensure_ssl_certificates() -> bool:
     cert_path.parent.mkdir(parents=True, exist_ok=True)
     key_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Kiểm tra xem openssl có sẵn trong hệ thống không
+    # Kiểm tra xem openssl có sẵn trong PATH không
     openssl_bin = shutil.which("openssl")
+    if not openssl_bin:
+        # Tìm ở các đường dẫn Git / OpenSSL phổ biến trên Windows
+        common_candidates = [
+            r"C:\Program Files\Git\usr\bin\openssl.exe",
+            r"C:\Program Files (x86)\Git\usr\bin\openssl.exe",
+            r"C:\OpenSSL-Win64\bin\openssl.exe",
+            r"C:\OpenSSL-Win32\bin\openssl.exe",
+            r"C:\ProgramData\chocolatey\bin\openssl.exe",
+            os.path.expandvars(r"%LOCALAPPDATA%\Programs\Git\usr\bin\openssl.exe"),
+        ]
+        for candidate in common_candidates:
+            if os.path.isfile(candidate):
+                openssl_bin = candidate
+                break
+
     if not openssl_bin:
         return False
 

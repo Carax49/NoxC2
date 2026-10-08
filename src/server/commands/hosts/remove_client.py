@@ -27,8 +27,13 @@ class RemoveClient(Command):
             return
 
         if len(args) == 1 and args[0].lower() in ('-a', '--all'):
-            for cid in Manager.get_client_list():
+            for cid in list(Manager.get_client_list().keys()):
                 Exit.execute(cid)
+                try:
+                    from db import AgentRepository
+                    AgentRepository.set_status(cid, 'dead')
+                except Exception:
+                    pass
 
             Manager.drop_all_clients()
             self.handler_shell.remove_all()
@@ -44,6 +49,11 @@ class RemoveClient(Command):
                     if Manager.check_valid_cid(cid):
                         valid_clients.append(cid)
                         Exit.execute(cid)
+                        try:
+                            from db import AgentRepository
+                            AgentRepository.set_status(cid, 'dead')
+                        except Exception:
+                            pass
 
                         Manager.drop_client(cid)
                         self.handler_shell.remove(cid)

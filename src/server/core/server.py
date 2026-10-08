@@ -72,6 +72,13 @@ class Server:
                 self.handle_file_download(uuid, addr, result_data)
             else:
                 # Normal command result
+                # Lưu kết quả task vào SQLite DB
+                try:
+                    from db import TaskRepository
+                    TaskRepository.save_latest_result(uuid, str(result_data), return_code=0)
+                except Exception:
+                    pass
+
                 # Escape output để tránh rich markup parsing lỗi với HTML/special chars
                 safe_output = escape(str(result_data))
                 print(f"\n[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {safe_output}")
@@ -93,6 +100,7 @@ class Server:
             download_data: dict with file_data (base64), file_name, file_size, file_path
         """
         import base64
+        import hashlib
 
         try:
             file_name = download_data.get('file_name', 'downloaded_file')
@@ -102,6 +110,7 @@ class Server:
 
             # Decode base64
             file_bytes = base64.b64decode(file_data_b64)
+            md5_hash = hashlib.md5(file_bytes).hexdigest()
 
             # Create downloads directory: downloads/<uuid>/
             downloads_dir = os.path.join("downloads", uuid)
@@ -119,6 +128,25 @@ class Server:
                     pass
 
             actual_size = os.path.getsize(local_save_path)
+
+            # Lưu vào SQLite DB: file_transfers và task_results
+            try:
+                from db import FileTransferRepository, TaskRepository
+                FileTransferRepository.record_transfer(
+                    agent_uuid=uuid,
+                    direction="download",
+                    remote_path=remote_path,
+                    local_path=local_save_path,
+                    file_size=actual_size,
+                    md5_hash=md5_hash,
+                )
+                TaskRepository.save_latest_result(
+                    uuid,
+                    f"Downloaded {file_name} ({actual_size} bytes, md5: {md5_hash})",
+                    return_code=0
+                )
+            except Exception:
+                pass
 
             print(f"\n[bright_green][+] File downloaded from {addr[0]}:[/bright_green]")
             print(f"    Remote: [cyan]{remote_path}[/cyan]")
@@ -175,3 +203,18 @@ class Server:
         arch        = data['arch']
 
         Manager.add_client(uuid, hostname, username, address, client_os, arch, session)
+
+        # Lưu agent vào SQLite DB
+        try:
+            from db import AgentRepository
+            AgentRepository.upsert_agent(
+                uuid=uuid,
+                hostname=hostname,
+                username=username,
+                ip=address[0],
+                port=address[1],
+                os_type=client_os,
+                arch=arch,
+            )
+        except Exception:
+            pass
