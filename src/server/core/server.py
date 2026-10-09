@@ -72,19 +72,19 @@ class Server:
                 self.handle_file_download(uuid, addr, result_data)
             else:
                 # Normal command result
-                # Lưu kết quả task vào SQLite DB
+                # Save task result to SQLite DB
                 try:
                     from db import TaskRepository
                     TaskRepository.save_latest_result(uuid, str(result_data), return_code=0)
                 except Exception:
                     pass
 
-                # Escape output để tránh rich markup parsing lỗi với HTML/special chars
+                # Escape output to prevent rich markup parsing errors with HTML/special chars
                 safe_output = escape(str(result_data))
                 print(f"\n[bright_cyan]From {addr[0]}:[/bright_cyan]\n ---> {safe_output}")
                 try:
                     from transport.api import broadcast_log
-                    # broadcast_log nhận plain text, không cần escape
+                    # broadcast_log accepts plain text, no escape needed
                     broadcast_log("result", f"[{addr[0]}] {result_data}")
                 except Exception:
                     pass
@@ -129,7 +129,7 @@ class Server:
 
             actual_size = os.path.getsize(local_save_path)
 
-            # Lưu vào SQLite DB: file_transfers và task_results
+            # Save to SQLite DB: file_transfers and task_results
             try:
                 from db import FileTransferRepository, TaskRepository
                 FileTransferRepository.record_transfer(
@@ -204,7 +204,7 @@ class Server:
 
         Manager.add_client(uuid, hostname, username, address, client_os, arch, session)
 
-        # Lưu agent vào SQLite DB
+        # Save agent to SQLite DB
         try:
             from db import AgentRepository
             AgentRepository.upsert_agent(

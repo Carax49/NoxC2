@@ -65,5 +65,5 @@ CREATE INDEX IF NOT EXISTS idx_logs_created ON audit_logs(created_at);
 
 
 def init_db(conn: sqlite3.Connection):
-    """Thực thi DDL script để khởi tạo các bảng và indexes nếu chưa có."""
+    """Execute DDL script to initialize tables and indexes if not already present."""
     conn.executescript(DDL_SCRIPT)

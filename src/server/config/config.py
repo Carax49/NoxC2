@@ -9,8 +9,8 @@ from pathlib import Path
 
 def _load_env():
     """
-    Tự động đọc cấu hình từ file .env nếu có (không cần thư viện bên ngoài).
-    Tìm kiếm ở thư mục hiện tại, thư mục root của project, hoặc thư mục server.
+    Automatically load configuration from a .env file if present (no external library required).
+    Searches current directory, project root, and server directory.
     """
     candidates = [
         Path.cwd() / ".env",
@@ -34,7 +34,7 @@ def _load_env():
                 pass
 
 
-# Nạp biến môi trường từ .env
+# Load environment variables from .env
 _load_env()
 
 # Project root path
@@ -54,10 +54,10 @@ MAX_WAITING_CLIENT = int(os.getenv("NOX_MAX_WAITING_CLIENT", "10"))
 MAX_RETRIES = int(os.getenv("NOX_MAX_RETRIES", "5"))
 
 # Server Security & Authentication Keys
-# SECRET_KEY dùng cho session / cookie / API token (tự sinh ngẫu nhiên nếu không có trong .env)
+# SECRET_KEY used for session / cookie / API token (randomly generated if not in .env)
 SECRET_KEY = os.getenv("NOX_SECRET_KEY") or secrets.token_hex(32)
 
-# AGENT_KEY: Pre-Shared Key (Token xác thực Agent lúc kết nối, rỗng = không yêu cầu)
+# AGENT_KEY: Pre-Shared Key (Agent authentication token on connection, empty = not required)
 AGENT_KEY = os.getenv("NOX_AGENT_KEY", "")
 
 # HTTPS / TLS Transport Configuration
@@ -70,9 +70,9 @@ SSL_KEY_PATH = os.getenv("NOX_SSL_KEY") or str(_DEFAULT_CERT_DIR / "server.key")
 
 def ensure_ssl_certificates() -> bool:
     """
-    Đảm bảo chứng chỉ SSL và private key đã tồn tại.
-    Nếu chưa có, tự động tạo self-signed certificate thông qua openssl.
-    Trả về True nếu thành công, False nếu thất bại.
+    Ensure that the SSL certificate and private key exist.
+    If not present, automatically generate a self-signed certificate using OpenSSL.
+    Returns True on success, False on failure.
     """
     cert_path = Path(SSL_CERT_PATH)
     key_path = Path(SSL_KEY_PATH)
@@ -80,14 +80,14 @@ def ensure_ssl_certificates() -> bool:
     if cert_path.is_file() and key_path.is_file():
         return True
 
-    # Tạo thư mục chứa nếu chưa tồn tại
+    # Create destination directory if it does not exist
     cert_path.parent.mkdir(parents=True, exist_ok=True)
     key_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Kiểm tra xem openssl có sẵn trong PATH không
+    # Check if openssl is available in PATH
     openssl_bin = shutil.which("openssl")
     if not openssl_bin:
-        # Tìm ở các đường dẫn Git / OpenSSL phổ biến trên Windows
+        # Check common Git / OpenSSL paths on Windows
         common_candidates = [
             r"C:\Program Files\Git\usr\bin\openssl.exe",
             r"C:\Program Files (x86)\Git\usr\bin\openssl.exe",

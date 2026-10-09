@@ -46,8 +46,8 @@ class Database:
     @contextmanager
     def get_connection(self):
         """
-        Context manager cung cấp SQLite connection với WAL mode và foreign keys bật.
-        Tự động commit khi hoàn thành, rollback nếu xảy ra ngoại lệ, và luôn close connection.
+        Context manager providing an SQLite connection with WAL mode and foreign keys enabled.
+        Automatically commits on completion, rolls back on exceptions, and closes the connection.
         """
         conn = sqlite3.connect(
             self.db_path,

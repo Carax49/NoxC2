@@ -39,7 +39,7 @@ class HTTPTransport(BaseTransport):
         return f"HTTPTransport(scheme={scheme}, host={self.__host}, port={self.__port})"
 
     def __register_api(self):
-        """Gắn REST API Blueprint (/api/*) và frontend (/) vào Flask app."""
+        """Register REST API Blueprint (/api/*) and frontend (/) on the Flask app."""
         from .api import create_api_blueprint
         blueprint = create_api_blueprint()
         self.__app.register_blueprint(blueprint)
@@ -88,7 +88,7 @@ class HTTPTransport(BaseTransport):
             if uuid not in self.__recv_queues:
                 return jsonify({'status': 'error', 'message': 'Unknown client'}), 404
 
-            # Cập nhật beacon thời gian thực
+            # Update beacon timestamp in real time
             try:
                 from core.client_manager import Manager
                 from db import AgentRepository
@@ -102,8 +102,8 @@ class HTTPTransport(BaseTransport):
             addr = (request.remote_addr, request.environ.get('REMOTE_PORT', 0))
             self.__recv_queues[uuid].put(request.get_data())
 
-            # Xử lý kết quả trong thread riêng để không block HTTP response.
-            # Agent chỉ cần biết server đã nhận được — không cần chờ gì thêm.
+            # Process results in a separate thread so the HTTP response is not blocked.
+            # The agent only needs acknowledgment that the server received it.
             if self.__on_client:
                 t = threading.Thread(target=self.__on_client, args=(uuid, addr), daemon=True)
                 t.start()
@@ -122,7 +122,7 @@ class HTTPTransport(BaseTransport):
             if uuid not in self.__send_queues:
                 return jsonify({'status': 'error', 'message': 'Unknown client'}), 404
 
-            # Cập nhật beacon thời gian thực khi agent poll lệnh
+            # Update beacon timestamp in real time when agent polls for commands
             try:
                 from core.client_manager import Manager
                 from db import AgentRepository
@@ -133,8 +133,8 @@ class HTTPTransport(BaseTransport):
             except Exception:
                 pass
 
-            # Long-poll: chờ tối đa COMMAND_POLL_TIMEOUT giây cho lệnh mới.
-            # Nếu hết giờ mà không có lệnh → 204, agent sẽ tự poll lại.
+            # Long-poll: wait up to COMMAND_POLL_TIMEOUT seconds for new commands.
+            # If timeout expires with no commands -> 204, agent will poll again.
             response_data = self.__wait_response(uuid, timeout=COMMAND_POLL_TIMEOUT)
             if response_data is None:
                 return b'', 204

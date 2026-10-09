@@ -30,7 +30,7 @@ class ClientSession:
         self.__transport = transport
 
     def send_request(self, message_type, data):
-        # Tự động ghi nhận task vào CSDL SQLite khi gửi lệnh tới agent
+        # Automatically record task into SQLite database when sending command to agent
         if message_type == messtype.COMMAND or message_type == "command":
             try:
                 from db import TaskRepository, FileTransferRepository

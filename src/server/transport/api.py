@@ -1,18 +1,18 @@
 # src/server/transport/api.py
 #
-# REST API Blueprint — gắn vào Flask app của HTTPTransport.
-# Cung cấp các endpoint /api/* để frontend web tương tác với server.
+# REST API Blueprint — attached to the Flask app of HTTPTransport.
+# Provides /api/* endpoints for the web frontend to interact with the server.
 #
 # Routes:
-#   GET  /api/clients              — danh sách agent đang kết nối
-#   GET  /api/clients/selected     — danh sách agent đang được chọn
-#   POST /api/clients/select       — chọn agent (body: {cids, add})
-#   POST /api/clients/drop         — bỏ chọn agent (body: {cids} | {all})
-#   POST /api/clients/remove       — disconnect + xoá agent (body: {cids} | {all})
-#   POST /api/shell                — gửi shell command (body: {command})
-#   POST /api/upload               — upload file tới agent (multipart: file + remote_path)
-#   GET  /api/events               — SSE stream cho log realtime
-#   GET  /                         — phục vụ index.html
+#   GET  /api/clients              — list connected agents
+#   GET  /api/clients/selected     — list currently selected agents
+#   POST /api/clients/select       — select agents (body: {cids, add})
+#   POST /api/clients/drop         — deselect agents (body: {cids} | {all})
+#   POST /api/clients/remove       — disconnect + delete agents (body: {cids} | {all})
+#   POST /api/shell                — send shell command (body: {command})
+#   POST /api/upload               — upload file to agents (multipart: file + remote_path)
+#   GET  /api/events               — SSE stream for real-time logs
+#   GET  /                         — serve index.html
 
 import base64
 import os
@@ -24,7 +24,7 @@ from pathlib import Path
 
 from flask import Blueprint, Response, jsonify, request, send_from_directory
 
-# ── SSE event queue (broadcast tới mọi connected client) ──────────────────────
+# ── SSE event queue (broadcast to all connected clients) ──────────────────────
 _sse_subscribers: list[queue.Queue] = []
 _sse_lock = threading.Lock()
 
@@ -32,7 +32,7 @@ _FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 
 
 def _broadcast(event_type: str, data: dict):
-    """Gửi SSE event tới mọi subscriber đang kết nối."""
+    """Send SSE event to all connected subscribers."""
     import json
     payload = f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
     with _sse_lock:
@@ -47,7 +47,7 @@ def _broadcast(event_type: str, data: dict):
 
 
 def broadcast_log(level: str, message: str):
-    """Shortcut để gửi log event ra frontend và lưu vào CSDL."""
+    """Shortcut to broadcast log event to frontend and record to database."""
     try:
         from db import LogRepository
         LogRepository.add_log(level, message)
@@ -62,7 +62,7 @@ def broadcast_log(level: str, message: str):
 
 
 def broadcast_client_update():
-    """Thông báo danh sách agent đã thay đổi."""
+    """Notify that the agent list has been updated."""
     _broadcast("clients_update", {"ts": int(time.time() * 1000)})
 
 
@@ -96,8 +96,8 @@ def _client_to_dict(cid: str, info) -> dict:
 
 def create_api_blueprint() -> Blueprint:
     """
-    Tạo Flask Blueprint chứa toàn bộ REST API.
-    Gọi hàm này sau khi Manager và ShellManager đã được import.
+    Create Flask Blueprint containing the complete REST API.
+    Call this function after Manager and ShellManager have been imported.
     """
     from core.client_manager import Manager
     from commands.interact.shell import ShellManager
@@ -136,7 +136,7 @@ def create_api_blueprint() -> Blueprint:
         body = request.get_json(force=True) or {}
         select_all = body.get("all", False)
         cids = body.get("cids", [])
-        add = body.get("add", False)          # True = giữ selection cũ
+        add = body.get("add", False)          # True = keep previous selection
 
         if not add:
             ShellManager.remove_all()
@@ -248,7 +248,7 @@ def create_api_blueprint() -> Blueprint:
         if not selected:
             return jsonify({"ok": False, "error": "No agents selected"}), 400
 
-        # Lưu tạm để reuse bytes
+        # Cache bytes for reuse
         raw = file_obj.read()
         file_size = len(raw)
         file_data_b64 = base64.b64encode(raw).decode("utf-8")
@@ -379,7 +379,7 @@ def create_api_blueprint() -> Blueprint:
             q: queue.Queue = queue.Queue(maxsize=200)
             with _sse_lock:
                 _sse_subscribers.append(q)
-            # Heartbeat ban đầu
+            # Initial heartbeat
             yield ": connected\n\n"
             try:
                 while True:
